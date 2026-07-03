@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Invoice - Apna Billing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white !important; }
+            #invoice-box { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important;}
+        }
+    </style>
+</head>
+<body class="bg-gray-200 font-sans antialiased text-gray-800 min-h-screen flex flex-col items-center py-10 px-4">
+
+    <!-- Loading / Error State -->
+    <div id="status-msg" class="text-center font-bold text-gray-600 mt-10">
+        <span class="text-2xl animate-pulse">⏳</span><br>Loading your invoice...
+    </div>
+
+    <!-- Printable Invoice Box (Hidden by default) -->
+    <div id="invoice-box" class="hidden bg-white p-6 rounded-lg shadow-xl w-full max-w-[400px] text-xs text-gray-800 border border-gray-200">
+        
+        <!-- Toolbar for Customer -->
+        <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-4 no-print">
+            <h1 class="font-bold text-lg text-slate-700">Invoice Details</h1>
+            <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-blue-700">🖨️ Download / Print</button>
+        </div>
+
+        <div class="text-center border-b-2 border-dashed border-gray-300 pb-3 mb-3">
+            <h2 class="text-xl font-extrabold text-slate-800">APNA BILLING STORE</h2>
+            <p class="text-[10px] text-gray-500">Siliguri, West Bengal | Ph: 9876543210</p>
+            <div class="inline-block bg-slate-800 text-white font-bold px-3 py-1 rounded-full mt-2 text-[10px]">TAX INVOICE</div>
+        </div>
+
+        <div class="flex justify-between mb-1">
+            <span><b>Date:</b> <span id="inv-date"></span></span>
+            <span><b>Bill No:</b> <span id="inv-id"></span></span>
+        </div>
+        <div class="mb-3 border-b border-gray-200 pb-3">
+            <p><b>Customer:</b> <span id="inv-cname"></span> (<span id="inv-cphone"></span>)</p>
+            <p class="text-[10px]"><b>Address:</b> <span id="inv-caddress"></span></p>
+            <p class="text-[10px]"><b>ID No:</b> <span id="inv-cdoc"></span></p>
+        </div>
+
+        <table class="w-full mb-3 text-left">
+            <thead>
+                <tr class="border-b border-gray-300">
+                    <th class="pb-1 w-[60%]">Item</th>
+                    <th class="pb-1 text-center">Qty</th>
+                    <th class="pb-1 text-right">Price</th>
+                </tr>
+            </thead>
+            <tbody id="inv-table-body">
+                <!-- Items Injected Here -->
+            </tbody>
+        </table>
+
+        <div class="border-t-2 border-dashed border-gray-300 pt-2 mb-3 text-right">
+            <p>Subtotal: ₹<span id="inv-subtotal"></span></p>
+            <p class="text-red-500">Discount: - ₹<span id="inv-discount"></span></p>
+            <h3 class="font-extrabold text-base mt-1">Grand Total: ₹<span id="inv-grand"></span></h3>
+        </div>
+
+        <div class="bg-gray-100 p-2 rounded text-[10px] mb-8 border border-gray-200">
+            <p><b>Payment Mode:</b> <span id="inv-paymode"></span></p>
+            <p id="inv-emi-row" class="hidden text-green-700 font-bold"><b>Downpayment Paid:</b> ₹<span id="inv-downpay"></span></p>
+        </div>
+        
+        <p class="text-center mt-4 text-[10px] text-gray-500 font-medium">Thank you for shopping with us!</p>
+    </div>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        
+        const app = initializeApp({ 
+            apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
+            projectId: "smartplan-96109", 
+            appId: "1:266453436752:web:bbe7047a7de525017fc455" 
+        });
+        const db = getFirestore(app);
+
+        // ১. URL থেকে Bill ID খুঁজে বের করা (যেমন: invoice.html?id=ABC123XYZ)
+        const urlParams = new URLSearchParams(window.location.search);
+        const billId = urlParams.get('id');
+
+        async function fetchInvoice() {
+            const statusMsg = document.getElementById('status-msg');
+            
+            if(!billId) {
+                statusMsg.innerHTML = "❌ Invalid Link! Bill ID is missing.";
+                return;
+            }
+
+            try {
+                // ফায়ারবেস থেকে ওই নির্দিষ্ট বিলের ডেটা টেনে আনা
+                const docRef = doc(db, "Bills", billId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const bill = docSnap.data();
+                    
+                    // ডেটা বসানো
+                    document.getElementById('inv-date').innerText = bill.date;
+                    document.getElementById('inv-id').innerText = billId.slice(0, 8).toUpperCase();
+                    document.getElementById('inv-cname').innerText = bill.customer.name;
+                    document.getElementById('inv-cphone').innerText = bill.customer.phone;
+                    document.getElementById('inv-caddress').innerText = bill.customer.address || 'N/A';
+                    document.getElementById('inv-cdoc').innerText = bill.customer.doc || 'N/A';
+
+                    let tableHTML = '';
+                    bill.items.forEach(item => {
+                        let gstTxt = item.gst ? ` (+${item.gst}% GST)` : '';
+                        tableHTML += `
+                            <tr class="border-b border-gray-100">
+                                <td class="py-1"><b>${item.name}</b><br><span class="text-[9px] text-gray-500">${item.barcode||'-'} ${gstTxt}</span></td>
+                                <td class="text-center py-1">1</td>
+                                <td class="text-right py-1">₹${item.sellPrice}</td>
+                            </tr>`;
+                    });
+                    document.getElementById('inv-table-body').innerHTML = tableHTML;
+
+                    document.getElementById('inv-subtotal').innerText = bill.subtotal.toFixed(2);
+                    document.getElementById('inv-discount').innerText = bill.discount.toFixed(2);
+                    document.getElementById('inv-grand').innerText = bill.grandTotal.toFixed(2);
+                    document.getElementById('inv-paymode').innerText = bill.paymentMode;
+
+                    if(bill.paymentMode === 'EMI/Finance') {
+                        document.getElementById('inv-emi-row').classList.remove('hidden');
+                        document.getElementById('inv-downpay').innerText = bill.downPayment.toFixed(2);
+                    }
+
+                    // Loading সরিয়ে আসল বিল দেখানো
+                    statusMsg.classList.add('hidden');
+                    document.getElementById('invoice-box').classList.remove('hidden');
+
+                } else {
+                    statusMsg.innerHTML = "❌ Bill not found! It may have been deleted.";
+                }
+            } catch (error) {
+                statusMsg.innerHTML = "❌ Error connecting to database! Check your internet.";
+            }
+        }
+
+        // ফাংশনটি কল করা
+        fetchInvoice();
+    </script>
+</body>
+</html>
