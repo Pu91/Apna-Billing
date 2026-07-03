@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Add Product - Apna Billing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        .slider-thumb { transition: transform 0.2s ease; }
+        .slider-thumb.dragging { transition: none; }
+        /* কাস্টম স্ক্রলবার লুকানোর জন্য (যদি ছোট ফোনে হালকা স্ক্রল লাগে) */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<!-- পেজটিকে ফিক্সড করার জন্য fixed, inset-0, h-[100dvh] এবং overflow-hidden ব্যবহার করা হয়েছে -->
+<body class="bg-gray-100 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
+
+    <!-- App Header -->
+    <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md">
+        <div class="flex items-center gap-3">
+            <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
+            <h1 class="text-lg font-bold">Apna Billing</h1>
+        </div>
+        <div class="relative">
+            <span class="text-xl">🔔</span>
+            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+        </div>
+    </header>
+
+    <!-- App Sidebar -->
+    <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14">
+        <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
+        <a href="index.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
+        <a href="sell.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
+        <a href="add_product.html" class="block py-3 px-6 text-base bg-slate-800 text-white font-bold border-b border-slate-700">➕ Add Product</a>
+        <a href="inventory.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
+        <a href="bills.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 All Bills</a>
+    </div>
+
+    <!-- Main Content (উচ্চতা ফিক্সড করা হয়েছে) -->
+    <main class="absolute top-14 bottom-0 w-full overflow-y-auto px-4 py-3">
+        <div class="max-w-lg mx-auto h-full flex flex-col">
+            
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-bold text-slate-700">Add New Product</h2>
+                <a href="index.html" class="text-xs bg-red-100 text-red-600 font-bold py-1.5 px-3 rounded-lg border border-red-200">Cancel</a>
+            </div>
+
+            <!-- Form Box -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex-1 flex flex-col">
+                
+                <div id="reader" class="w-full hidden mb-3 border-2 border-blue-400 rounded-xl overflow-hidden"></div>
+
+                <div class="mb-3">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Barcode / IMEI</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="p-barcode" placeholder="Scan or type here..." class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        <button onclick="startScanner()" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-md">📷</button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Product Name</label>
+                    <input type="text" id="p-name" placeholder="e.g. Samsung Galaxy S24" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Category</label>
+                        <div class="relative">
+                            <input type="text" id="p-category" placeholder="Type/Select" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none pr-8 text-sm" onclick="toggleDropdown('cat-dropdown')">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="toggleDropdown('cat-dropdown')">
+                                <span class="text-gray-500 font-bold">^</span>
+                            </div>
+                        </div>
+                        <div id="cat-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-32 overflow-y-auto">
+                            <div class="p-2 text-center text-xs text-gray-400">Loading...</div>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">GST (%)</label>
+                        <div class="relative">
+                            <input type="number" id="p-gst" value="18" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none pr-8 text-sm" onclick="toggleDropdown('gst-dropdown')">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="toggleDropdown('gst-dropdown')">
+                                <span class="text-gray-500 font-bold">^</span>
+                            </div>
+                        </div>
+                        <div id="gst-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-32 overflow-y-auto">
+                            <div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-gst', '0', 'gst-dropdown')">0%</div>
+                            <div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-gst', '12', 'gst-dropdown')">12%</div>
+                            <div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-gst', '18', 'gst-dropdown')">18%</div>
+                            <div class="p-2 hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-gst', '28', 'gst-dropdown')">28%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">M.R.P (₹)</label>
+                        <input type="number" id="p-mrp" placeholder="0.00" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Sell Price (₹)</label>
+                        <input type="number" id="p-sell" placeholder="0.00" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none text-sm">
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Total Stock (Qty)</label>
+                    <input type="number" id="p-stock" placeholder="10" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                </div>
+
+                <!-- SLIDE TO ADD BUTTON (Compact size) -->
+                <div class="mt-auto">
+                    <div class="relative w-full h-12 bg-green-100 border border-green-300 rounded-full overflow-hidden shadow-sm" id="slider-container">
+                        <div class="absolute inset-0 flex items-center justify-center text-green-700 font-bold text-sm tracking-wide z-0 pointer-events-none">
+                            Slide to Add Product ➔
+                        </div>
+                        <div id="slider-thumb" class="slider-thumb absolute top-1 left-1 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center cursor-grab shadow-lg z-10 text-white font-bold text-lg">
+                            »
+                        </div>
+                        <div id="slider-progress" class="absolute top-0 left-0 h-full bg-green-500 opacity-20 w-0 z-0 transition-all duration-200"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- UI Scripts -->
+    <script>
+        function toggleDropdown(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+        function selectOption(inputId, value, dropdownId) {
+            document.getElementById(inputId).value = value;
+            document.getElementById(dropdownId).classList.add('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.relative')) {
+                document.getElementById('cat-dropdown').classList.add('hidden');
+                document.getElementById('gst-dropdown').classList.add('hidden');
+            }
+        });
+
+        // Barcode Scanner
+        let html5QrCode;
+        function startScanner() {
+            document.getElementById('reader').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (text) => {
+                document.getElementById('p-barcode').value = text;
+                html5QrCode.stop(); 
+                document.getElementById('reader').classList.add('hidden');
+            }, (err) => {});
+        }
+
+        // Slide Button Logic
+        const slider = document.getElementById('slider-thumb');
+        const container = document.getElementById('slider-container');
+        const progress = document.getElementById('slider-progress');
+        let isDragging = false, startX = 0, currentX = 0, maxSlide = 0;
+
+        const onDragStart = (e) => {
+            isDragging = true;
+            startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            maxSlide = container.offsetWidth - slider.offsetWidth - 8;
+            slider.classList.add('dragging');
+        };
+
+        const onDragMove = (e) => {
+            if (!isDragging) return;
+            let x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            currentX = x - startX;
+            if (currentX < 0) currentX = 0;
+            if (currentX > maxSlide) currentX = maxSlide;
+            
+            slider.style.transform = `translateX(${currentX}px)`;
+            progress.style.width = `${currentX + 20}px`;
+        };
+
+        const onDragEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            slider.classList.remove('dragging');
+
+            if (currentX >= maxSlide * 0.85) {
+                slider.style.transform = `translateX(${maxSlide}px)`;
+                progress.style.width = '100%';
+                slider.innerHTML = "⏳";
+                slider.classList.add('bg-blue-500');
+                if(window.saveProductToFirebase) window.saveProductToFirebase();
+            } else {
+                window.resetSlider();
+            }
+        };
+
+        slider.addEventListener('mousedown', onDragStart);
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+        slider.addEventListener('touchstart', onDragStart, {passive: true});
+        document.addEventListener('touchmove', onDragMove, {passive: true});
+        document.addEventListener('touchend', onDragEnd);
+
+        window.resetSlider = function() {
+            slider.style.transform = `translateX(0px)`;
+            progress.style.width = '0px';
+            slider.innerHTML = "»";
+            slider.classList.remove('bg-blue-500');
+            currentX = 0;
+        }
+    </script>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        
+        const app = initializeApp({ 
+            apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
+            projectId: "smartplan-96109", 
+            appId: "1:266453436752:web:bbe7047a7de525017fc455" 
+        });
+        const db = getFirestore(app);
+
+        // Fetch Categories
+        async function fetchCategories() {
+            try {
+                const snap = await getDocs(collection(db, "Products"));
+                let categories = new Set(["Mobile", "Smartwatch", "Accessories", "Smart TV"]);
+                
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    if(data.category) categories.add(data.category); 
+                });
+
+                const catDiv = document.getElementById('cat-dropdown');
+                catDiv.innerHTML = '';
+                categories.forEach(cat => {
+                    catDiv.innerHTML += `<div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-category', '${cat}', 'cat-dropdown')">${cat}</div>`;
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        
+        fetchCategories();
+
+        // Save Function
+        window.saveProductToFirebase = async function() {
+            const name = document.getElementById('p-name').value;
+            const sell = Number(document.getElementById('p-sell').value);
+            const stock = Number(document.getElementById('p-stock').value);
+            const cat = document.getElementById('p-category').value;
+            
+            if(!name || !sell || !stock || !cat) {
+                alert("Please fill Name, Category, Sell Price and Stock!");
+                window.resetSlider();
+                return;
+            }
+            
+            try {
+                await addDoc(collection(db, "Products"), {
+                    barcode: document.getElementById('p-barcode').value, 
+                    name: name, 
+                    category: cat, 
+                    gst: Number(document.getElementById('p-gst').value), 
+                    mrp: Number(document.getElementById('p-mrp').value), 
+                    sellPrice: sell, 
+                    stock: stock, 
+                    addedAt: new Date().toISOString()
+                });
+                alert("✅ Product Added Successfully!");
+                window.location.reload(); 
+            } catch(e) { 
+                alert("❌ Error saving product!"); 
+                window.resetSlider();
+            }
+        };
+    </script>
+</body>
+</html>
