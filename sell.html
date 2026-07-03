@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sell Product - Apna Billing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Barcode Scanner -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Print Styles for Invoice */
+        @media print {
+            body * { visibility: hidden; }
+            #invoice-print-area, #invoice-print-area * { visibility: visible; }
+            #invoice-print-area { position: absolute; left: 0; top: 0; width: 100%; border: none; padding: 0; margin: 0;}
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
+
+    <!-- App Header -->
+    <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md no-print">
+        <div class="flex items-center gap-3">
+            <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
+            <h1 class="text-lg font-bold">Apna Billing</h1>
+        </div>
+        <div class="relative"><span class="text-xl">🛒</span></div>
+    </header>
+
+    <!-- App Sidebar -->
+    <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14 no-print">
+        <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
+        <a href="index.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
+        <a href="sell.html" class="block py-3 px-6 text-base bg-slate-800 text-white font-bold border-b border-slate-700">🛒 Sell Product</a>
+        <a href="add_product.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">➕ Add Product</a>
+        <a href="inventory.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
+        <a href="bills.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 All Bills</a>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50">
+        
+        <!-- ================= STEP 1: CART & SEARCH ================= -->
+        <div id="step-1" class="flex flex-col h-full">
+            <div class="bg-white px-4 pt-4 pb-2 z-40 border-b border-gray-200 shadow-sm no-print">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-bold text-slate-800">Step 1: Cart</h2>
+                    <a href="index.html" class="text-xs bg-red-100 text-red-600 font-bold py-1.5 px-3 rounded-lg border border-red-200">Cancel</a>
+                </div>
+
+                <!-- Search & Scan Bar -->
+                <div class="flex gap-2 relative">
+                    <div class="relative flex-1">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                        <input type="text" id="sell-search" placeholder="Search name or barcode..." autocomplete="off" class="w-full pl-9 pr-3 py-3 bg-gray-50 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                    </div>
+                    <button onclick="openScanner()" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 text-xl">📷</button>
+                    
+                    <!-- Search Results Popup -->
+                    <div id="search-results" class="hidden absolute top-[100%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto z-50"></div>
+                </div>
+            </div>
+
+            <!-- Cart Items Container -->
+            <div id="cart-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pb-24">
+                <div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100 mt-10">
+                    <div class="text-4xl mb-2">🛒</div>
+                    <p class="font-bold text-sm">Your cart is empty!</p>
+                    <p class="text-xs mt-1">Search or scan product to add</p>
+                </div>
+            </div>
+
+            <!-- Sticky Bottom Checkout Bar -->
+            <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-40 no-print">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-gray-500 font-bold text-sm">Total Items: <span id="cart-qty" class="text-blue-600">0</span></span>
+                    <span class="text-slate-800 font-extrabold text-xl">₹<span id="cart-subtotal">0.00</span></span>
+                </div>
+                <button onclick="goToStep(2)" class="w-full bg-green-600 text-white font-bold py-3.5 rounded-xl shadow-md text-lg">Next: Customer ➔</button>
+            </div>
+        </div>
+
+
+        <!-- ================= STEP 2: CUSTOMER DETAILS ================= -->
+        <div id="step-2" class="hidden flex-col h-full">
+            <div class="bg-white px-4 py-4 z-40 border-b border-gray-200 shadow-sm flex items-center gap-3">
+                <button onclick="goToStep(1)" class="text-xl font-bold text-gray-600">⬅</button>
+                <h2 class="text-lg font-bold text-slate-800">Step 2: Customer Info</h2>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 pb-24">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Customer Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="c-name" placeholder="John Doe" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Mobile Number <span class="text-red-500">*</span></label>
+                        <input type="number" id="c-phone" placeholder="10-digit number" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Address</label>
+                        <input type="text" id="c-address" placeholder="City / Area" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">ID Document (Aadhar/PAN)</label>
+                        <input type="text" id="c-doc" placeholder="Optional" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-40">
+                <button onclick="goToPaymentStep()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-md text-lg">Next: Payment ➔</button>
+            </div>
+        </div>
+
+
+        <!-- ================= STEP 3: PAYMENT & DISCOUNT ================= -->
+        <div id="step-3" class="hidden flex-col h-full">
+            <div class="bg-white px-4 py-4 z-40 border-b border-gray-200 shadow-sm flex items-center gap-3">
+                <button onclick="goToStep(2)" class="text-xl font-bold text-gray-600">⬅</button>
+                <h2 class="text-lg font-bold text-slate-800">Step 3: Payment</h2>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 pb-32">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                    
+                    <!-- Subtotal Display -->
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-200">
+                        <span class="font-bold text-gray-600 text-sm">Subtotal:</span>
+                        <span class="font-extrabold text-slate-800 text-lg">₹<span id="p-subtotal">0.00</span></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Discount Amount (₹)</label>
+                        <input type="number" id="s-discount" value="0" oninput="calculateFinalTotal()" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm text-red-600 font-bold">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Payment Mode</label>
+                        <select id="s-paymode" onchange="toggleEmiField()" class="w-full py-3 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-bold text-slate-700 appearance-none">
+                            <option value="Cash">💵 Cash</option>
+                            <option value="Online/UPI">📱 Online / UPI</option>
+                            <option value="EMI/Finance">💳 EMI / Finance</option>
+                        </select>
+                    </div>
+
+                    <div id="emi-downpayment-div" class="hidden">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Downpayment Paid (₹)</label>
+                        <input type="number" id="s-downpay" value="0" class="w-full py-2.5 px-3 bg-green-50 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none text-sm font-bold text-green-700">
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-40">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-gray-500 font-bold text-sm">Grand Total:</span>
+                    <span class="text-green-600 font-extrabold text-2xl">₹<span id="final-total">0.00</span></span>
+                </div>
+                <button id="btn-generate-bill" onclick="generateBill()" class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow-md text-lg">💾 Generate Bill</button>
+            </div>
+        </div>
+
+
+        <!-- ================= INVOICE PREVIEW ================= -->
+        <div id="step-invoice" class="hidden flex-col h-full bg-gray-200">
+            <!-- Toolbar -->
+            <div class="bg-white px-4 py-3 z-40 border-b border-gray-200 shadow-sm flex justify-between items-center no-print">
+                <button onclick="location.reload()" class="text-sm font-bold bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg">➕ New Bill</button>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-sm">🖨️ Print</button>
+                    <button id="btn-whatsapp" class="bg-green-500 text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-sm">💬 Share</button>
+                </div>
+            </div>
+
+            <!-- Printable A4 / Receipt Box -->
+            <div class="flex-1 overflow-y-auto p-4 flex justify-center">
+                <div id="invoice-print-area" class="bg-white p-6 rounded-sm shadow-md w-full max-w-[400px] text-xs text-gray-800 self-start">
+                    
+                    <div class="text-center border-b-2 border-dashed border-gray-300 pb-3 mb-3">
+                        <h2 class="text-xl font-extrabold text-slate-800">APNA BILLING STORE</h2>
+                        <p class="text-[10px] text-gray-500">Siliguri, West Bengal | Ph: 9876543210</p>
+                        <div class="inline-block bg-slate-800 text-white font-bold px-3 py-1 rounded-full mt-2 text-[10px]">TAX INVOICE</div>
+                    </div>
+
+                    <div class="flex justify-between mb-1">
+                        <span><b>Date:</b> <span id="inv-date"></span></span>
+                        <span><b>Bill No:</b> <span id="inv-id"></span></span>
+                    </div>
+                    <div class="mb-3 border-b border-gray-200 pb-3">
+                        <p><b>Customer:</b> <span id="inv-cname"></span> (<span id="inv-cphone"></span>)</p>
+                        <p class="text-[10px]"><b>Address:</b> <span id="inv-caddress"></span></p>
+                        <p class="text-[10px]"><b>ID No:</b> <span id="inv-cdoc"></span></p>
+                    </div>
+
+                    <table class="w-full mb-3 text-left">
+                        <thead>
+                            <tr class="border-b border-gray-300">
+                                <th class="pb-1 w-[60%]">Item</th>
+                                <th class="pb-1 text-center">Qty</th>
+                                <th class="pb-1 text-right">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inv-table-body">
+                            <!-- Items Injected Here -->
+                        </tbody>
+                    </table>
+
+                    <div class="border-t-2 border-dashed border-gray-300 pt-2 mb-3 text-right">
+                        <p>Subtotal: ₹<span id="inv-subtotal"></span></p>
+                        <p class="text-red-500">Discount: - ₹<span id="inv-discount"></span></p>
+                        <h3 class="font-extrabold text-base mt-1">Grand Total: ₹<span id="inv-grand"></span></h3>
+                    </div>
+
+                    <div class="bg-gray-100 p-2 rounded text-[10px] mb-8">
+                        <p><b>Payment Mode:</b> <span id="inv-paymode"></span></p>
+                        <p id="inv-emi-row" class="hidden text-green-700 font-bold"><b>Downpayment Paid:</b> ₹<span id="inv-downpay"></span></p>
+                    </div>
+                    
+                    <div class="flex justify-between mt-10 pt-2 border-t border-gray-300">
+                        <p class="text-center w-1/2">Customer Sign</p>
+                        <p class="text-center w-1/2">Authorized Sign</p>
+                    </div>
+                    <p class="text-center mt-4 text-[9px] text-gray-400">Thank you for shopping with us!</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- SCANNER MODAL (from Inventory page) -->
+    <div id="scanner-modal" class="fixed inset-0 z-[100] hidden flex-col bg-black">
+        <div class="flex justify-between p-4 text-white bg-slate-900">
+            <h3 class="font-bold text-lg">Scan Barcode</h3>
+            <button onclick="closeScanner()" class="font-bold text-red-400 text-lg">Close ✖</button>
+        </div>
+        <div id="reader" class="w-full flex-1"></div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        
+        const app = initializeApp({ 
+            apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
+            projectId: "smartplan-96109", 
+            appId: "1:266453436752:web:bbe7047a7de525017fc455" 
+        });
+        const db = getFirestore(app);
+
+        let allProducts = [];
+        let cart = [];
+        let subtotal = 0;
+
+        // 1. Fetch Products for Search
+        async function loadProducts() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "Products"));
+                querySnapshot.forEach(doc => {
+                    allProducts.push({ id: doc.id, ...doc.data() });
+                });
+            } catch(e) {
+                alert("Failed to load products from database!");
+            }
+        }
+        loadProducts();
+
+        // 2. Navigation Steps
+        window.goToStep = function(step) {
+            if(step === 2 && cart.length === 0) {
+                alert("Please add at least one product to cart!"); return;
+            }
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-1').classList.remove('flex');
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('flex');
+            document.getElementById('step-3').classList.add('hidden');
+            document.getElementById('step-3').classList.remove('flex');
+            document.getElementById('step-invoice').classList.add('hidden');
+            document.getElementById('step-invoice').classList.remove('flex');
+
+            document.getElementById(`step-${step}`).classList.remove('hidden');
+            document.getElementById(`step-${step}`).classList.add('flex');
+        };
+
+        window.goToPaymentStep = function() {
+            const name = document.getElementById('c-name').value;
+            const phone = document.getElementById('c-phone').value;
+            if(!name || !phone) {
+                alert("Customer Name and Phone Number are required!"); return;
+            }
+            document.getElementById('p-subtotal').innerText = subtotal.toFixed(2);
+            window.calculateFinalTotal();
+            window.goToStep(3);
+        };
+
+     document.getElementById('sell-search').addEventListener('input', (e) => {
+            const txt = e.target.value.toLowerCase();
+            const resBox = document.getElementById('search-results');
+            if(txt.length < 2) { resBox.classList.add('hidden'); return; }
+            
+            const matches = allProducts.filter(p => p.name.toLowerCase().includes(txt) || (p.barcode && p.barcode.toLowerCase().includes(txt)));
+            
+            resBox.innerHTML = '';
+            if(matches.length === 0) {
+                resBox.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No product found!</div>';
+            } else {
+                matches.forEach(p => {
+                    const isOutOfStock = p.stock < 1;
+                    const stockCol = isOutOfStock ? '<span class="text-red-500 text-xs font-bold">Out of Stock</span>' : `<span class="text-green-600 text-xs font-bold">Stock: ${p.stock}</span>`;
+                    const btnHtml = isOutOfStock 
+                        ? `<button disabled class="bg-gray-200 text-gray-400 px-3 py-1.5 rounded-lg text-xs font-bold">Add</button>`
+                        : `<button onclick="addToCart('${p.id}')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-200">Add ➕</button>`;
+                    
+                    resBox.innerHTML += `
+                        <div class="p-3 border-b border-gray-100 flex justify-between items-center hover:bg-gray-50">
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">${p.name}</h4>
+                                ${stockCol}
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="font-extrabold text-slate-800 text-sm">₹${p.sellPrice}</span>
+                                ${btnHtml}
+                            </div>
+                        </div>`;
+                });
+            }
+            resBox.classList.remove('hidden');
+        });
+
+        window.addToCart = function(id) {
+            const product = allProducts.find(p => p.id === id);
+            if(!product) return;
+            
+            // Check if already in cart to manage Qty (For simplicity, adding as separate line item like original logic, or you can merge quantities)
+            // Here we add as single item (Qty 1) per click
+            cart.push({...product});
+            
+            document.getElementById('sell-search').value = '';
+            document.getElementById('search-results').classList.add('hidden');
+            updateCartUI();
+        };
+
+        window.removeFromCart = function(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        };
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-container');
+            subtotal = 0;
+            
+            if(cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100 mt-10">
+                        <div class="text-4xl mb-2">🛒</div><p class="font-bold text-sm">Your cart is empty!</p>
+                    </div>`;
+                document.getElementById('cart-qty').innerText = '0';
+                document.getElementById('cart-subtotal').innerText = '0.00';
+                return;
+            }
+            
+            container.innerHTML = '';
+            cart.forEach((item, index) => {
+                subtotal += Number(item.sellPrice);
+                container.innerHTML += `
+                    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center border-l-4 border-l-blue-500">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h3>
+                            <p class="text-[10px] text-gray-500 mt-0.5">Barcode: ${item.barcode || 'N/A'}</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="font-extrabold text-sm text-slate-800">₹${item.sellPrice}</span>
+                            <button onclick="removeFromCart(${index})" class="text-red-500 font-bold bg-red-50 w-8 h-8 rounded-full flex items-center justify-center text-lg hover:bg-red-100">✖</button>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('cart-qty').innerText = cart.length;
+            document.getElementById('cart-subtotal').innerText = subtotal.toFixed(2);
+        }
+
+        // 4. Payment Logic
+        window.calculateFinalTotal = function() {
+            let discount = Number(document.getElementById('s-discount').value) || 0;
+            let final = subtotal - discount;
+            if(final < 0) final = 0;
+            document.getElementById('final-total').innerText = final.toFixed(2);
+        };
+
+        window.toggleEmiField = function() {
+            const mode = document.getElementById('s-paymode').value;
+            const emiDiv = document.getElementById('emi-downpayment-div');
+            if(mode === 'EMI/Finance') {
+                emiDiv.classList.remove('hidden');
+            } else {
+                emiDiv.classList.add('hidden');
+            }
+        };
+
+        // 5. Generate Bill & Save to Firebase
+        window.generateBill = async function() {
+            const btn = document.getElementById('btn-generate-bill');
+            btn.innerText = "Saving Bill... ⏳";
+            btn.disabled = true;
+
+            const cName = document.getElementById('c-name').value;
+            const cPhone = document.getElementById('c-phone').value;
+            const cAddress = document.getElementById('c-address').value;
+            const cDoc = document.getElementById('c-doc').value;
+            
+            const discount = Number(document.getElementById('s-discount').value) || 0;
+            const payMode = document.getElementById('s-paymode').value;
+            const downPay = (payMode === 'EMI/Finance') ? Number(document.getElementById('s-downpay').value) : 0;
+            const grandTotal = subtotal - discount;
+
+            const billData = {
+                customer: { name: cName, phone: cPhone, address: cAddress, doc: cDoc },
+                items: cart,
+                subtotal: subtotal, discount: discount, grandTotal: grandTotal,
+                paymentMode: payMode, downPayment: downPay,
+                date: new Date().toLocaleDateString('en-GB'), // DD/MM/YYYY format
+                timestamp: new Date().getTime()
+            };
+
+            try {
+                // Save Bill
+                const billRef = await addDoc(collection(db, "Bills"), billData);
+                
+                // Reduce Stock in Background
+                for(let item of cart) {
+                    const prodRef = doc(db, "Products", item.id);
+                    await updateDoc(prodRef, { stock: item.stock - 1 });
+                }
+
+                alert("✅ Bill Generated Successfully!");
+                showInvoice(billData, billRef.id);
+            } catch (e) { 
+                alert("❌ Error generating bill!"); 
+                btn.innerText = "💾 Generate Bill";
+                btn.disabled = false;
+            }
+        };
+
+        function showInvoice(bill, billId) {
+            document.getElementById('step-3').classList.add('hidden');
+            document.getElementById('step-3').classList.remove('flex');
+            
+            const invoiceDiv = document.getElementById('step-invoice');
+            invoiceDiv.classList.remove('hidden');
+            invoiceDiv.classList.add('flex');
+
+            // Populate Invoice
+            document.getElementById('inv-date').innerText = bill.date;
+            document.getElementById('inv-id').innerText = billId.slice(0, 8).toUpperCase();
+            document.getElementById('inv-cname').innerText = bill.customer.name;
+            document.getElementById('inv-cphone').innerText = bill.customer.phone;
+            document.getElementById('inv-caddress').innerText = bill.customer.address || 'N/A';
+            document.getElementById('inv-cdoc').innerText = bill.customer.doc || 'N/A';
+
+            let tableHTML = '';
+            bill.items.forEach(item => {
+                let gstTxt = item.gst ? ` (+${item.gst}% GST)` : '';
+                tableHTML += `
+                    <tr class="border-b border-gray-100">
+                        <td class="py-1"><b>${item.name}</b><br><span class="text-[9px] text-gray-500">${item.barcode||'-'} ${gstTxt}</span></td>
+                        <td class="text-center py-1">1</td>
+                        <td class="text-right py-1">₹${item.sellPrice}</td>
+                    </tr>`;
+            });
+            document.getElementById('inv-table-body').innerHTML = tableHTML;
+
+            document.getElementById('inv-subtotal').innerText = bill.subtotal.toFixed(2);
+            document.getElementById('inv-discount').innerText = bill.discount.toFixed(2);
+            document.getElementById('inv-grand').innerText = bill.grandTotal.toFixed(2);
+            document.getElementById('inv-paymode').innerText = bill.paymentMode;
+
+            const emiRow = document.getElementById('inv-emi-row');
+            if(bill.paymentMode === 'EMI/Finance') {
+                emiRow.classList.remove('hidden');
+                document.getElementById('inv-downpay').innerText = bill.downPayment.toFixed(2);
+            } else {
+                emiRow.classList.add('hidden');
+            }
+
+            // WhatsApp Share link
+            const waText = `Hello ${bill.customer.name},\nThank you for shopping at Apna Billing!\n\n🧾 Bill Details:\nBill No: ${billId.slice(0,8).toUpperCase()}\nAmount: ₹${bill.grandTotal}\nDate: ${bill.date}\nPayment: ${bill.paymentMode}\n\nHave a great day!`;
+            document.getElementById('btn-whatsapp').onclick = () => window.open(`https://wa.me/91${bill.customer.phone}?text=${encodeURIComponent(waText)}`, '_blank');
+        }
+
+        // 6. Scanner Logic (Camera)
+        let html5QrCode;
+        window.openScanner = function() {
+            const modal = document.getElementById('scanner-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+                document.getElementById('sell-search').value = text;
+                // Trigger input event to search auto
+                document.getElementById('sell-search').dispatchEvent(new Event('input'));
+                window.closeScanner();
+            }, (err) => {});
+        };
+
+        window.closeScanner = function() {
+            if(html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    const modal = document.getElementById('scanner-modal');
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }).catch(err => console.log(err));
+            }
+        };
+
+    </script>
+</body>
+</html>
