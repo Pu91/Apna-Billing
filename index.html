@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apna Billing - Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #F4F7F6; display: flex; flex-direction: column; height: 100vh; }
+        .header { background-color: #2C3E50; color: white; display: flex; justify-content: space-between; padding: 15px 20px; position: fixed; top: 0; width: 100%; z-index: 1000; }
+        .sidebar { height: 100%; width: 0; position: fixed; top: 0; left: 0; background-color: #1A252F; overflow-x: hidden; transition: 0.3s; padding-top: 60px; z-index: 2000; }
+        .sidebar a { padding: 15px 25px; text-decoration: none; font-size: 18px; color: #BDC3C7; display: block; }
+        .sidebar a:hover { color: white; background-color: #2C3E50; }
+        .close-btn, .menu-icon { cursor: pointer; font-size: 24px; }
+        .close-btn { position: absolute; top: 10px; right: 20px; font-size: 30px; }
+        .main-content { margin-top: 70px; padding: 20px; flex: 1; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 20px;}
+        .dashboard-card { background-color: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; border-bottom: 4px solid #2980B9; }
+        .card-icon { font-size: 30px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="menu-icon" onclick="document.getElementById('mySidebar').style.width = '250px'">&#9776;</div>
+        <div style="font-size: 20px; font-weight: bold;">Apna Billing</div>
+        <div>&#128276;</div>
+    </div>
+
+    <div id="mySidebar" class="sidebar">
+        <span class="close-btn" onclick="document.getElementById('mySidebar').style.width = '0'">&times;</span>
+        <a href="index.html">🏠 Home</a>
+        <a href="sell.html">🛒 Sell Product</a>
+        <a href="add_product.html">➕ Add Product</a>
+        <a href="inventory.html">📦 Inventory</a>
+        <a href="bills.html">📜 All Bills</a>
+    </div>
+
+    <div class="main-content">
+        <div style="font-size: 18px; margin-bottom: 10px;">স্বাগতম, <b>Admin</b>!</div>
+        <div class="card-grid">
+            <div class="dashboard-card" onclick="window.location.href='sell.html'">
+                <div class="card-icon" style="color: #2980B9;">🛒</div><div>Sell Product</div>
+            </div>
+            <div class="dashboard-card" style="border-color: #27AE60;" onclick="window.location.href='add_product.html'">
+                <div class="card-icon" style="color: #27AE60;">➕</div><div>Add Product</div>
+            </div>
+            <div class="dashboard-card" style="border-color: #F39C12;" onclick="window.location.href='inventory.html'">
+                <div class="card-icon" style="color: #F39C12;">📦</div><div>Inventory</div>
+            </div>
+            <div class="dashboard-card" style="border-color: #8E44AD;" onclick="window.location.href='bills.html'">
+                <div class="card-icon" style="color: #8E44AD;">📜</div><div>All Bills</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
