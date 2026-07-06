@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>All Bills - Apna Billing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #invoice-view, #invoice-view * { visibility: visible; }
+            #invoice-view { position: absolute; left: 0; top: 0; width: 100%; border: none; padding: 0; margin: 0; background: white;}
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
+
+    <!-- App Header -->
+    <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md no-print">
+        <div class="flex items-center gap-3">
+            <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
+            <h1 class="text-lg font-bold">Apna Billing</h1>
+        </div>
+        <div class="relative"><span class="text-xl">📜</span></div>
+    </header>
+
+    <!-- App Sidebar -->
+    <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14 no-print">
+        <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
+        <a href="index.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
+        <a href="sell.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
+        <a href="add_product.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">➕ Add Product</a>
+        <a href="inventory.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
+        <a href="bills.html" class="block py-3 px-6 text-base bg-slate-800 text-white font-bold border-b border-slate-700">📜 All Bills</a>
+    </div>
+
+    <!-- MAIN CONTENT: BILLS LIST -->
+    <main id="bills-main" class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50">
+        
+        <div class="bg-white px-4 pt-4 pb-3 z-40 border-b border-gray-200 shadow-sm no-print">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-bold text-slate-800">Sales History</h2>
+                <div class="text-sm font-bold text-gray-500">Total Bills: <span id="total-bills" class="text-blue-600">0</span></div>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                    <input type="text" id="search-name" placeholder="Customer Name..." class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium">
+                </div>
+                <div class="w-[140px]">
+                    <input type="date" id="filter-date" class="w-full py-2 px-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs font-medium text-gray-600">
+                </div>
+            </div>
+            <button onclick="clearFilters()" class="text-[11px] font-bold text-red-500 mt-2 float-right mr-1">Clear Filters ✖</button>
+        </div>
+
+        <div id="bills-list-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pb-20">
+            <div class="text-center p-5 text-gray-500 font-bold">Loading bills... ⏳</div>
+        </div>
+
+    </main>
+
+    <!-- INVOICE VIEW -->
+    <div id="invoice-view" class="hidden absolute top-0 left-0 w-full h-[100dvh] bg-gray-200 flex-col z-[70]">
+        
+        <!-- Toolbar -->
+        <div class="bg-white px-4 py-3 z-40 border-b border-gray-200 shadow-sm flex justify-between items-center no-print">
+            <button onclick="closeInvoice()" class="text-sm font-bold bg-red-100 text-red-700 px-3 py-1.5 rounded-lg flex items-center gap-1">⬅ Back</button>
+            <div class="flex gap-2">
+                <button onclick="window.print()" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-sm">🖨️ Print</button>
+                
+                <!-- NEW WHATSAPP BUTTON WITH ORIGINAL ICON -->
+                <button id="btn-whatsapp" class="bg-[#25D366] hover:bg-[#1EBE55] text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-sm flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.005-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+                    </svg>
+                    WhatsApp
+                </button>
+            </div>
+        </div>
+
+        <!-- Printable Area -->
+        <div class="flex-1 overflow-y-auto p-4 flex justify-center pb-20">
+            <div class="bg-white p-6 rounded-sm shadow-md w-full max-w-[400px] text-xs text-gray-800 self-start border border-gray-200">
+                
+                <div class="text-center border-b-2 border-dashed border-gray-300 pb-3 mb-3">
+                    <h2 class="text-xl font-extrabold text-slate-800">APNA BILLING STORE</h2>
+                    <p class="text-[10px] text-gray-500">Siliguri, West Bengal | Ph: 9876543210</p>
+                    <div class="inline-block bg-slate-800 text-white font-bold px-3 py-1 rounded-full mt-2 text-[10px]">TAX INVOICE</div>
+                </div>
+
+                <div class="flex justify-between mb-1">
+                    <span><b>Date:</b> <span id="inv-date"></span></span>
+                    <span><b>Bill No:</b> <span id="inv-id"></span></span>
+                </div>
+                <div class="mb-3 border-b border-gray-200 pb-3">
+                    <p><b>Customer:</b> <span id="inv-cname"></span> (<span id="inv-cphone"></span>)</p>
+                    <p class="text-[10px]"><b>Address:</b> <span id="inv-caddress"></span></p>
+                    <p class="text-[10px]"><b>ID No:</b> <span id="inv-cdoc"></span></p>
+                </div>
+
+                <table class="w-full mb-3 text-left">
+                    <thead>
+                        <tr class="border-b border-gray-300">
+                            <th class="pb-1 w-[60%]">Item</th>
+                            <th class="pb-1 text-center">Qty</th>
+                            <th class="pb-1 text-right">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inv-table-body">
+                        <!-- Items Injected Here -->
+                    </tbody>
+                </table>
+
+                <div class="border-t-2 border-dashed border-gray-300 pt-2 mb-3 text-right">
+                    <p>Subtotal: ₹<span id="inv-subtotal"></span></p>
+                    <p class="text-red-500">Discount: - ₹<span id="inv-discount"></span></p>
+                    <h3 class="font-extrabold text-base mt-1">Grand Total: ₹<span id="inv-grand"></span></h3>
+                </div>
+
+                <div class="bg-gray-100 p-2 rounded text-[10px] mb-8">
+                    <p><b>Payment Mode:</b> <span id="inv-paymode"></span></p>
+                    <p id="inv-emi-row" class="hidden text-green-700 font-bold"><b>Downpayment Paid:</b> ₹<span id="inv-downpay"></span></p>
+                </div>
+                
+                <div class="flex justify-between mt-10 pt-2 border-t border-gray-300">
+                    <p class="text-center w-1/2">Customer Sign</p>
+                    <p class="text-center w-1/2">Authorized Sign</p>
+                </div>
+                <p class="text-center mt-4 text-[9px] text-gray-400">Thank you for shopping with us!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI & Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        
+        const app = initializeApp({ 
+            apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
+            projectId: "smartplan-96109", 
+            appId: "1:266453436752:web:bbe7047a7de525017fc455" 
+        });
+        const db = getFirestore(app);
+
+        let allBills = [];
+
+        async function fetchBills() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "Bills"));
+                allBills = [];
+                querySnapshot.forEach((doc) => {
+                    allBills.push({ id: doc.id, ...doc.data() });
+                });
+                
+                allBills.sort((a, b) => b.timestamp - a.timestamp);
+                renderBills(allBills);
+            } catch(e) {
+                document.getElementById('bills-list-container').innerHTML = `<div class="text-center p-5 text-red-500 font-bold bg-red-50 rounded-xl border border-red-200">❌ Failed to load bills! Check connection.</div>`;
+            }
+        }
+
+        function renderBills(billsToRender) {
+            const listDiv = document.getElementById('bills-list-container');
+            document.getElementById('total-bills').innerText = billsToRender.length;
+            listDiv.innerHTML = ''; 
+
+            if(billsToRender.length === 0) {
+                listDiv.innerHTML = `<div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100"><div class="text-3xl mb-2">📭</div><p class="font-bold">No bills found!</p></div>`;
+                return;
+            }
+
+            billsToRender.forEach(b => {
+                let modeIcon = "💳";
+                if(b.paymentMode === "Cash") modeIcon = "💵";
+                if(b.paymentMode === "Online/UPI") modeIcon = "📱";
+
+                let displayDate = b.date;
+                if (b.timestamp) {
+                    const d = new Date(b.timestamp);
+                    displayDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                }
+
+                const html = `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-indigo-500 transition-transform active:scale-95">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-extrabold text-slate-800 text-base">${b.customer.name}</h3>
+                                <p class="text-[11px] text-gray-500 font-medium">No: ${b.id.slice(0,8).toUpperCase()}</p>
+                            </div>
+                            <div class="text-right">
+                                <h3 class="font-black text-lg text-green-600">₹${b.grandTotal}</h3>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center text-xs text-gray-600 font-medium mb-3 bg-gray-50 p-2 rounded-lg">
+                            <span>📅 ${displayDate}</span>
+                            <span>${modeIcon} ${b.paymentMode}</span>
+                        </div>
+                        
+                        <button onclick="viewInvoice('${b.id}')" class="w-full bg-indigo-50 text-indigo-700 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-100 flex items-center justify-center gap-2 shadow-sm">
+                            👁️ View Invoice
+                        </button>
+                    </div>`;
+                listDiv.innerHTML += html;
+            });
+        }
+
+        document.getElementById('search-name').addEventListener('input', applyFilters);
+        document.getElementById('filter-date').addEventListener('change', applyFilters);
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('search-name').value.toLowerCase();
+            const dateTerm = document.getElementById('filter-date').value; 
+            
+            const filtered = allBills.filter(b => {
+                const matchName = b.customer.name.toLowerCase().includes(searchTerm) || b.id.toLowerCase().includes(searchTerm);
+                
+                let matchDate = true;
+                if(dateTerm) {
+                    const [y, m, d] = dateTerm.split('-');
+                    const formattedDateTerm = `${d}/${m}/${y}`; 
+                    matchDate = (b.date === formattedDateTerm);
+                }
+
+                return matchName && matchDate;
+            });
+            renderBills(filtered);
+        }
+
+        window.clearFilters = function() {
+            document.getElementById('search-name').value = '';
+            document.getElementById('filter-date').value = '';
+            renderBills(allBills);
+        }
+
+        window.viewInvoice = function(billId) {
+            const bill = allBills.find(x => x.id === billId);
+            if(!bill) return;
+
+            document.getElementById('bills-main').classList.add('hidden');
+            document.getElementById('invoice-view').classList.remove('hidden');
+            document.getElementById('invoice-view').classList.add('flex');
+
+            document.getElementById('inv-date').innerText = bill.date;
+            document.getElementById('inv-id').innerText = billId.slice(0, 8).toUpperCase();
+            document.getElementById('inv-cname').innerText = bill.customer.name;
+            document.getElementById('inv-cphone').innerText = bill.customer.phone;
+            document.getElementById('inv-caddress').innerText = bill.customer.address || 'N/A';
+            document.getElementById('inv-cdoc').innerText = bill.customer.doc || 'N/A';
+
+            let tableHTML = '';
+            bill.items.forEach(item => {
+                let gstTxt = item.gst ? ` (+${item.gst}% GST)` : '';
+                tableHTML += `
+                    <tr class="border-b border-gray-100">
+                        <td class="py-1"><b>${item.name}</b><br><span class="text-[9px] text-gray-500">${item.barcode||'-'} ${gstTxt}</span></td>
+                        <td class="text-center py-1">1</td>
+                        <td class="text-right py-1">₹${item.sellPrice}</td>
+                    </tr>`;
+            });
+            document.getElementById('inv-table-body').innerHTML = tableHTML;
+
+            document.getElementById('inv-subtotal').innerText = bill.subtotal.toFixed(2);
+            document.getElementById('inv-discount').innerText = bill.discount.toFixed(2);
+            document.getElementById('inv-grand').innerText = bill.grandTotal.toFixed(2);
+            document.getElementById('inv-paymode').innerText = bill.paymentMode;
+
+            const emiRow = document.getElementById('inv-emi-row');
+            if(bill.paymentMode === 'EMI/Finance') {
+                emiRow.classList.remove('hidden');
+                document.getElementById('inv-downpay').innerText = bill.downPayment.toFixed(2);
+            } else {
+                emiRow.classList.add('hidden');
+            }
+
+            // NEW: GENERATING A SHAREABLE LINK FORMAT & WHATSAPP LOGIC
+            const hostUrl = window.location.origin; 
+            const billLink = `${hostUrl}/invoice.html?id=${billId}`; 
+
+            const waText = `Hello ${bill.customer.name},\nHere is your duplicate copy of the bill from Apna Billing!\n\n🧾 *Bill Details:*\n• Bill No: ${billId.slice(0,8).toUpperCase()}\n• Amount: ₹${bill.grandTotal}\n• Date: ${bill.date}\n• Payment: ${bill.paymentMode}\n\n🔗 *Download/View Bill Here:*\n${billLink}\n\nThank you for shopping with us!`;
+            
+            document.getElementById('btn-whatsapp').onclick = () => window.open(`https://wa.me/91${bill.customer.phone}?text=${encodeURIComponent(waText)}`, '_blank');
+        }
+
+        window.closeInvoice = function() {
+            document.getElementById('invoice-view').classList.add('hidden');
+            document.getElementById('invoice-view').classList.remove('flex');
+            document.getElementById('bills-main').classList.remove('hidden');
+        }
+
+        fetchBills();
+    </script>
+</body>
+</html>
