@@ -3,75 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Invoice - Apna Billing</title>
+    <title>Tax Invoice - Apna Billing</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        body { background-color: #f3f4f6; font-family: sans-serif; }
         @media print {
+            body { background-color: white; }
             .no-print { display: none !important; }
-            body { background-color: white !important; }
-            #invoice-box { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important;}
+            .print-area { box-shadow: none !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 10px !important;}
         }
     </style>
 </head>
-<body class="bg-gray-200 font-sans antialiased text-gray-800 min-h-screen flex flex-col items-center py-10 px-4">
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-    <!-- Loading / Error State -->
-    <div id="status-msg" class="text-center font-bold text-gray-600 mt-10">
-        <span class="text-2xl animate-pulse">⏳</span><br>Loading your invoice...
+    <!-- Loading State -->
+    <div id="loading" class="text-gray-500 font-bold text-lg mt-10">Fetching Bill Details... ⏳</div>
+
+    <!-- Error State -->
+    <div id="error-msg" class="hidden text-red-500 font-bold text-lg mt-10 bg-red-100 p-4 rounded-xl border border-red-200">
+        ❌ Invalid Bill Link or Bill Not Found!
     </div>
 
-    <!-- Printable Invoice Box (Hidden by default) -->
-    <div id="invoice-box" class="hidden bg-white p-6 rounded-lg shadow-xl w-full max-w-[400px] text-xs text-gray-800 border border-gray-200">
+    <!-- MAIN INVOICE BOX -->
+    <div id="invoice-box" class="hidden print-area bg-white w-full max-w-[420px] rounded-lg shadow-xl p-6 text-sm text-gray-800 relative mt-4 mb-20">
         
-        <!-- Toolbar for Customer -->
-        <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-4 no-print">
-            <h1 class="font-bold text-lg text-slate-700">Invoice Details</h1>
-            <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-blue-700">🖨️ Download / Print</button>
+        <!-- Header -->
+        <div class="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4">
+            <h1 class="text-2xl font-black text-slate-800 tracking-wide">APNA BILLING STORE</h1>
+            <p class="text-xs text-gray-500 mt-1">Siliguri, West Bengal, India</p>
+            <p class="text-xs text-gray-500">Ph: +91 9876543210</p>
+            <div class="inline-block bg-slate-800 text-white font-bold px-4 py-1 rounded-full mt-3 text-xs tracking-widest uppercase">
+                Tax Invoice
+            </div>
         </div>
 
-        <div class="text-center border-b-2 border-dashed border-gray-300 pb-3 mb-3">
-            <h2 class="text-xl font-extrabold text-slate-800">APNA BILLING STORE</h2>
-            <p class="text-[10px] text-gray-500">Siliguri, West Bengal | Ph: 9876543210</p>
-            <div class="inline-block bg-slate-800 text-white font-bold px-3 py-1 rounded-full mt-2 text-[10px]">TAX INVOICE</div>
+        <!-- Bill Info -->
+        <div class="flex justify-between text-xs mb-2">
+            <p><b>Date:</b> <span id="inv-date"></span></p>
+            <p><b>Bill No:</b> <span id="inv-id" class="uppercase text-blue-600 font-bold"></span></p>
         </div>
 
-        <div class="flex justify-between mb-1">
-            <span><b>Date:</b> <span id="inv-date"></span></span>
-            <span><b>Bill No:</b> <span id="inv-id"></span></span>
-        </div>
-        <div class="mb-3 border-b border-gray-200 pb-3">
-            <p><b>Customer:</b> <span id="inv-cname"></span> (<span id="inv-cphone"></span>)</p>
-            <p class="text-[10px]"><b>Address:</b> <span id="inv-caddress"></span></p>
-            <p class="text-[10px]"><b>ID No:</b> <span id="inv-cdoc"></span></p>
+        <!-- Customer Info -->
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-4 text-xs">
+            <p class="mb-1"><b>Billed To:</b> <span id="inv-cname" class="font-bold text-slate-700 text-sm"></span></p>
+            <p class="mb-1"><b>Phone:</b> <span id="inv-cphone"></span></p>
+            <p id="address-box" class="hidden"><b>Address:</b> <span id="inv-caddress"></span></p>
         </div>
 
-        <table class="w-full mb-3 text-left">
+        <!-- Items Table -->
+        <table class="w-full mb-4 text-left border-collapse">
             <thead>
-                <tr class="border-b border-gray-300">
-                    <th class="pb-1 w-[60%]">Item</th>
-                    <th class="pb-1 text-center">Qty</th>
-                    <th class="pb-1 text-right">Price</th>
+                <tr class="border-b-2 border-gray-800 text-xs text-slate-800">
+                    <th class="pb-2 w-[55%]">Item Details</th>
+                    <th class="pb-2 text-center w-[15%]">GST</th>
+                    <th class="pb-2 text-right w-[30%]">Total</th>
                 </tr>
             </thead>
-            <tbody id="inv-table-body">
-                <!-- Items Injected Here -->
+            <tbody id="inv-items" class="text-xs divide-y divide-gray-100">
+                <!-- Items will be injected here via JS -->
             </tbody>
         </table>
 
-        <div class="border-t-2 border-dashed border-gray-300 pt-2 mb-3 text-right">
-            <p>Subtotal: ₹<span id="inv-subtotal"></span></p>
-            <p class="text-red-500">Discount: - ₹<span id="inv-discount"></span></p>
-            <h3 class="font-extrabold text-base mt-1">Grand Total: ₹<span id="inv-grand"></span></h3>
+        <!-- Totals Section -->
+        <div class="border-t-2 border-gray-800 pt-3 mb-4 space-y-1.5 text-xs">
+            <div class="flex justify-between text-gray-600">
+                <span>Subtotal (Items)</span>
+                <span class="font-bold">₹<span id="inv-subtotal"></span></span>
+            </div>
+            <div class="flex justify-between text-blue-600">
+                <span>Total GST Added</span>
+                <span class="font-bold">+ ₹<span id="inv-gst"></span></span>
+            </div>
+            <div id="discount-row" class="hidden flex justify-between text-red-500 pb-2 border-b border-gray-200">
+                <span>Discount Applied</span>
+                <span class="font-bold">- ₹<span id="inv-discount"></span></span>
+            </div>
+            <div class="flex justify-between text-lg font-black text-slate-800 pt-1">
+                <span>Grand Total</span>
+                <span>₹<span id="inv-grand"></span></span>
+            </div>
         </div>
 
-        <div class="bg-gray-100 p-2 rounded text-[10px] mb-8 border border-gray-200">
-            <p><b>Payment Mode:</b> <span id="inv-paymode"></span></p>
-            <p id="inv-emi-row" class="hidden text-green-700 font-bold"><b>Downpayment Paid:</b> ₹<span id="inv-downpay"></span></p>
+        <!-- Payment Info -->
+        <div class="bg-slate-50 p-3 rounded border border-slate-200 text-xs">
+            <p class="mb-1"><b>Payment Mode:</b> <span id="inv-paymode" class="font-bold"></span></p>
+            <p id="emi-row" class="hidden text-green-700"><b>Downpayment Paid:</b> <span class="font-bold">₹<span id="inv-downpay"></span></span></p>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6 text-gray-400">
+            <p class="text-xs font-bold mb-1">Thank you for your business!</p>
+            <p class="text-[10px]">Returns accepted within 7 days with original invoice.</p>
         </div>
         
-        <p class="text-center mt-4 text-[10px] text-gray-500 font-medium">Thank you for shopping with us!</p>
     </div>
+
+    <!-- Floating Print Button (Only visible on screen) -->
+    <button onclick="window.print()" class="no-print fixed bottom-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-2xl flex items-center gap-2 text-sm transition-transform active:scale-95">
+        <span>🖨️</span> Print / Save PDF
+    </button>
 
     <!-- Firebase Logic -->
     <script type="module">
@@ -85,70 +116,99 @@
         });
         const db = getFirestore(app);
 
-        // ১. URL থেকে Bill ID খুঁজে বের করা (যেমন: invoice.html?id=ABC123XYZ)
-        const urlParams = new URLSearchParams(window.location.search);
-        const billId = urlParams.get('id');
+        async function fetchInvoiceData() {
+            // Get Bill ID from URL (e.g., invoice.html?id=abc123xyz)
+            const urlParams = new URLSearchParams(window.location.search);
+            const billId = urlParams.get('id');
 
-        async function fetchInvoice() {
-            const statusMsg = document.getElementById('status-msg');
-            
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('error-msg');
+            const invBox = document.getElementById('invoice-box');
+
             if(!billId) {
-                statusMsg.innerHTML = "❌ Invalid Link! Bill ID is missing.";
+                loading.classList.add('hidden');
+                errorMsg.classList.remove('hidden');
                 return;
             }
 
             try {
-                // ফায়ারবেস থেকে ওই নির্দিষ্ট বিলের ডেটা টেনে আনা
                 const docRef = doc(db, "Bills", billId);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     const bill = docSnap.data();
                     
-                    // ডেটা বসানো
+                    // Hide loading, show invoice
+                    loading.classList.add('hidden');
+                    invBox.classList.remove('hidden');
+
+                    // Populate Top Details
                     document.getElementById('inv-date').innerText = bill.date;
-                    document.getElementById('inv-id').innerText = billId.slice(0, 8).toUpperCase();
+                    document.getElementById('inv-id').innerText = billId.slice(0, 8); // Shortened ID for neatness
                     document.getElementById('inv-cname').innerText = bill.customer.name;
                     document.getElementById('inv-cphone').innerText = bill.customer.phone;
-                    document.getElementById('inv-caddress').innerText = bill.customer.address || 'N/A';
-                    document.getElementById('inv-cdoc').innerText = bill.customer.doc || 'N/A';
-
-                    let tableHTML = '';
-                    bill.items.forEach(item => {
-                        let gstTxt = item.gst ? ` (+${item.gst}% GST)` : '';
-                        tableHTML += `
-                            <tr class="border-b border-gray-100">
-                                <td class="py-1"><b>${item.name}</b><br><span class="text-[9px] text-gray-500">${item.barcode||'-'} ${gstTxt}</span></td>
-                                <td class="text-center py-1">1</td>
-                                <td class="text-right py-1">₹${item.sellPrice}</td>
-                            </tr>`;
-                    });
-                    document.getElementById('inv-table-body').innerHTML = tableHTML;
-
-                    document.getElementById('inv-subtotal').innerText = bill.subtotal.toFixed(2);
-                    document.getElementById('inv-discount').innerText = bill.discount.toFixed(2);
-                    document.getElementById('inv-grand').innerText = bill.grandTotal.toFixed(2);
-                    document.getElementById('inv-paymode').innerText = bill.paymentMode;
-
-                    if(bill.paymentMode === 'EMI/Finance') {
-                        document.getElementById('inv-emi-row').classList.remove('hidden');
-                        document.getElementById('inv-downpay').innerText = bill.downPayment.toFixed(2);
+                    
+                    if(bill.customer.address) {
+                        document.getElementById('address-box').classList.remove('hidden');
+                        document.getElementById('inv-caddress').innerText = bill.customer.address;
                     }
 
-                    // Loading সরিয়ে আসল বিল দেখানো
-                    statusMsg.classList.add('hidden');
-                    document.getElementById('invoice-box').classList.remove('hidden');
+                    // Populate Items Table
+                    let tbody = '';
+                    bill.items.forEach(item => {
+                        let gstAmt = (Number(item.sellPrice) * Number(item.gst || 0)) / 100;
+                        let finalPrice = Number(item.sellPrice) + gstAmt;
+                        
+                        // IMEI Formatting (if exists)
+                        let imeiText = item.soldImei ? `<br><span class="text-[9.5px] text-gray-500 font-bold tracking-wider">IMEI: ${item.soldImei}</span>` : '';
+
+                        tbody += `
+                            <tr>
+                                <td class="py-2.5 leading-tight text-slate-800 font-bold">
+                                    ${item.name} ${imeiText}
+                                </td>
+                                <td class="py-2.5 text-center text-gray-500 font-medium">
+                                    ${item.gst || 0}%
+                                </td>
+                                <td class="py-2.5 text-right font-bold text-slate-800">
+                                    ₹${finalPrice.toFixed(2)}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    document.getElementById('inv-items').innerHTML = tbody;
+
+                    // Populate Totals
+                    document.getElementById('inv-subtotal').innerText = Number(bill.subtotal).toFixed(2);
+                    document.getElementById('inv-gst').innerText = Number(bill.totalGst).toFixed(2);
+                    document.getElementById('inv-grand').innerText = Number(bill.grandTotal).toFixed(2);
+                    
+                    if(bill.discount && Number(bill.discount) > 0) {
+                        document.getElementById('discount-row').classList.remove('hidden');
+                        document.getElementById('inv-discount').innerText = Number(bill.discount).toFixed(2);
+                    }
+
+                    // Populate Payment Mode
+                    document.getElementById('inv-paymode').innerText = bill.paymentMode;
+                    if(bill.paymentMode === 'EMI/Finance') {
+                        document.getElementById('emi-row').classList.remove('hidden');
+                        document.getElementById('inv-downpay').innerText = Number(bill.downPayment).toFixed(2);
+                    }
 
                 } else {
-                    statusMsg.innerHTML = "❌ Bill not found! It may have been deleted.";
+                    // Document doesn't exist
+                    loading.classList.add('hidden');
+                    errorMsg.classList.remove('hidden');
                 }
             } catch (error) {
-                statusMsg.innerHTML = "❌ Error connecting to database! Check your internet.";
+                loading.classList.add('hidden');
+                errorMsg.innerText = "❌ Network Error! Could not load bill.";
+                errorMsg.classList.remove('hidden');
             }
         }
 
-        // ফাংশনটি কল করা
-        fetchInvoice();
+        // Run fetch on load
+        fetchInvoiceData();
     </script>
 </body>
 </html>
