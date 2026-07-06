@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GST Report - Apna Billing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
+
+    <!-- App Header -->
+    <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md">
+        <div class="flex items-center gap-3">
+            <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
+            <h1 class="text-lg font-bold">Apna Billing</h1>
+        </div>
+        <div class="text-sm font-semibold text-slate-300">🏛️ GST Report</div>
+    </header>
+
+    <!-- App Sidebar -->
+    <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14">
+        <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
+        <a href="index.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
+        <a href="sell.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
+        <a href="purchase.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🚚 Purchase Entry</a>
+        <a href="reports.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📊 P&L Reports</a>
+        <a href="gst_report.html" class="block py-3 px-6 text-base bg-slate-800 text-white font-bold border-b border-slate-700">🏛️ GST Report</a>
+        <a href="khata.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📒 Ledger Khata</a>
+        <a href="inventory.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
+        <a href="bills.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 All Bills</a>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50 overflow-hidden">
+        
+        <!-- Date Filter Box -->
+        <div class="bg-white p-4 shadow-sm border-b border-gray-200 z-40 shrink-0">
+            <h3 class="font-bold text-xs text-gray-400 uppercase tracking-wider mb-2">Filter GST By Date</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] text-gray-500 font-bold mb-1">From Date</label>
+                    <input type="date" id="start-date" class="w-full py-2 px-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-gray-500 font-bold mb-1">To Date</label>
+                    <input type="date" id="end-date" class="w-full py-2 px-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button onclick="generateGSTReport()" class="flex-1 bg-indigo-600 text-white text-xs font-bold py-2.5 rounded-xl shadow-sm hover:bg-indigo-700">Generate Report</button>
+                <button onclick="clearFilter()" class="bg-gray-100 text-gray-600 text-xs font-bold py-2.5 px-4 rounded-xl border">Reset</button>
+            </div>
+        </div>
+
+        <!-- Scrollable Report Area -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+            
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-center">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">Taxable Value (Base)</p>
+                    <h3 class="text-lg font-black text-slate-800">₹<span id="gst-base">0.00</span></h3>
+                </div>
+                <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 shadow-sm text-center">
+                    <p class="text-[10px] font-bold text-indigo-500 uppercase">Total GST Collected</p>
+                    <h3 class="text-lg font-black text-indigo-700">₹<span id="gst-collected">0.00</span></h3>
+                </div>
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-slate-50 p-3 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="font-bold text-sm text-slate-700">B2C Sales Details</h3>
+                    <span class="text-xs font-bold text-gray-500">Total Bills: <span id="gst-bill-count">0</span></span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead class="bg-gray-100 text-gray-500 text-[10px] uppercase font-extrabold">
+                            <tr>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Bill No</th>
+                                <th class="p-3 text-right">Taxable (₹)</th>
+                                <th class="p-3 text-right text-indigo-600">GST Amt (₹)</th>
+                                <th class="p-3 text-right">Total (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gst-table-body" class="text-xs divide-y divide-gray-100">
+                            <tr><td colspan="5" class="text-center p-4 text-gray-400 font-bold">Loading data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        
+        const app = initializeApp({ 
+            apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
+            projectId: "smartplan-96109", 
+            appId: "1:266453436752:web:bbe7047a7de525017fc455" 
+        });
+        const db = getFirestore(app);
+
+        let allSales = [];
+
+        async function loadData() {
+            try {
+                const salesSnap = await getDocs(collection(db, "Bills"));
+                allSales = [];
+                salesSnap.forEach(doc => {
+                    allSales.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Sort by timestamp descending
+                allSales.sort((a, b) => b.timestamp - a.timestamp);
+                
+                // শুরুতে লাইফটাইম রিপোর্ট
+                calculateGSTReport(null, null);
+            } catch (e) {
+                document.getElementById('gst-table-body').innerHTML = `<tr><td colspan="5" class="text-center p-4 text-red-500 font-bold">Error loading data!</td></tr>`;
+            }
+        }
+
+        window.generateGSTReport = function() {
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+
+            if(!start || !end) {
+                alert("Please select both From and To dates!");
+                return;
+            }
+
+            const startTime = new Date(start + "T00:00:00").getTime();
+            const endTime = new Date(end + "T23:59:59").getTime();
+
+            calculateGSTReport(startTime, endTime);
+        };
+
+        window.clearFilter = function() {
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            calculateGSTReport(null, null);
+        };
+
+        function calculateGSTReport(startTs, endTs) {
+            let totalBaseAmount = 0;
+            let totalGSTAmount = 0;
+            let validBillsCount = 0;
+            let tbodyHTML = '';
+
+            allSales.forEach(bill => {
+                if(startTs && endTs) {
+                    if(!bill.timestamp || bill.timestamp < startTs || bill.timestamp > endTs) return;
+                }
+
+                // যদি বিলে GST থাকে তবেই রিপোর্টে যোগ হবে
+                let billGst = Number(bill.totalGst || 0);
+                if(billGst > 0) {
+                    let taxableAmt = Number(bill.subtotal || 0);
+                    let grandAmt = Number(bill.grandTotal || 0);
+
+                    totalBaseAmount += taxableAmt;
+                    totalGSTAmount += billGst;
+                    validBillsCount++;
+
+                    tbodyHTML += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="p-3 text-gray-500">${bill.date}</td>
+                            <td class="p-3 font-bold text-slate-700">${bill.id.slice(0,6).toUpperCase()}</td>
+                            <td class="p-3 text-right text-gray-600">${taxableAmt.toFixed(2)}</td>
+                            <td class="p-3 text-right font-black text-indigo-600">+${billGst.toFixed(2)}</td>
+                            <td class="p-3 text-right font-bold text-slate-800">${grandAmt.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if(validBillsCount === 0) {
+                tbodyHTML = `<tr><td colspan="5" class="text-center p-4 text-gray-400 font-bold">No GST records found for this period.</td></tr>`;
+            }
+
+            // Update UI
+            document.getElementById('gst-base').innerText = totalBaseAmount.toFixed(2);
+            document.getElementById('gst-collected').innerText = totalGSTAmount.toFixed(2);
+            document.getElementById('gst-bill-count').innerText = validBillsCount;
+            document.getElementById('gst-table-body').innerHTML = tbodyHTML;
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
