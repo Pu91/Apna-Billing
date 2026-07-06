@@ -2,55 +2,286 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apna Billing - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard - Apna Billing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #F4F7F6; display: flex; flex-direction: column; height: 100vh; }
-        .header { background-color: #2C3E50; color: white; display: flex; justify-content: space-between; padding: 15px 20px; position: fixed; top: 0; width: 100%; z-index: 1000; }
-        .sidebar { height: 100%; width: 0; position: fixed; top: 0; left: 0; background-color: #1A252F; overflow-x: hidden; transition: 0.3s; padding-top: 60px; z-index: 2000; }
-        .sidebar a { padding: 15px 25px; text-decoration: none; font-size: 18px; color: #BDC3C7; display: block; }
-        .sidebar a:hover { color: white; background-color: #2C3E50; }
-        .close-btn, .menu-icon { cursor: pointer; font-size: 24px; }
-        .close-btn { position: absolute; top: 10px; right: 20px; font-size: 30px; }
-        .main-content { margin-top: 70px; padding: 20px; flex: 1; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 20px;}
-        .dashboard-card { background-color: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; border-bottom: 4px solid #2980B9; }
-        .card-icon { font-size: 30px; margin-bottom: 10px; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body>
-    <div class="header">
-        <div class="menu-icon" onclick="document.getElementById('mySidebar').style.width = '250px'">&#9776;</div>
-        <div style="font-size: 20px; font-weight: bold;">Apna Billing</div>
-        <div>&#128276;</div>
-    </div>
+<body class="bg-gray-100 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
 
-    <div id="mySidebar" class="sidebar">
-        <span class="close-btn" onclick="document.getElementById('mySidebar').style.width = '0'">&times;</span>
-        <a href="index.html">🏠 Home</a>
-        <a href="sell.html">🛒 Sell Product</a>
-        <a href="add_product.html">➕ Add Product</a>
-        <a href="inventory.html">📦 Inventory</a>
-        <a href="bills.html">📜 All Bills</a>
-    </div>
+    <!-- ROLE/PIN LOCK SCREEN OVERLAY -->
+    <div id="lock-screen" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center p-6 text-white">
+        <h2 class="text-3xl font-black mb-2 tracking-wide text-blue-400">APNA BILLING</h2>
+        <p class="text-xs text-slate-400 mb-8 uppercase tracking-widest">Select your role</p>
+        
+        <div class="w-full max-w-xs space-y-3">
+            <button onclick="selectRole('staff')" class="w-full bg-slate-800 hover:bg-slate-700 py-3.5 rounded-2xl font-bold text-sm shadow-md transition-transform active:scale-95 border border-slate-700 flex items-center justify-center gap-2">
+                <span class="text-xl">🧑‍💼</span> Login as Staff
+            </button>
+            
+            <div class="flex items-center justify-center gap-2 my-2">
+                <div class="h-px bg-slate-700 flex-1"></div>
+                <span class="text-[10px] text-slate-500 font-bold uppercase">Owner</span>
+                <div class="h-px bg-slate-700 flex-1"></div>
+            </div>
 
-    <div class="main-content">
-        <div style="font-size: 18px; margin-bottom: 10px;">স্বাগতম, <b>Admin</b>!</div>
-        <div class="card-grid">
-            <div class="dashboard-card" onclick="window.location.href='sell.html'">
-                <div class="card-icon" style="color: #2980B9;">🛒</div><div>Sell Product</div>
-            </div>
-            <div class="dashboard-card" style="border-color: #27AE60;" onclick="window.location.href='add_product.html'">
-                <div class="card-icon" style="color: #27AE60;">➕</div><div>Add Product</div>
-            </div>
-            <div class="dashboard-card" style="border-color: #F39C12;" onclick="window.location.href='inventory.html'">
-                <div class="card-icon" style="color: #F39C12;">📦</div><div>Inventory</div>
-            </div>
-            <div class="dashboard-card" style="border-color: #8E44AD;" onclick="window.location.href='bill.html'">
-                <div class="card-icon" style="color: #8E44AD;">📜</div><div>All Bills</div>
+            <button onclick="showAdminPinField()" class="w-full bg-blue-600 hover:bg-blue-700 py-3.5 rounded-2xl font-bold text-sm shadow-md transition-transform active:scale-95 flex items-center justify-center gap-2">
+                <span class="text-xl">👑</span> Login as Admin
+            </button>
+            
+            <!-- Hidden PIN Input Box -->
+            <div id="pin-area" class="hidden pt-4 space-y-2 bg-slate-800 p-4 rounded-2xl mt-4 border border-slate-700">
+                <label class="block text-center text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Enter 4-Digit PIN</label>
+                <input type="password" id="admin-pin" placeholder="••••" maxlength="4" class="w-full text-center py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-black text-2xl tracking-[0.5em] text-white">
+                <button onclick="verifyAdminPin()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold text-xs mt-2 shadow-sm">Verify & Unlock</button>
             </div>
         </div>
     </div>
+
+    <!-- App Header -->
+    <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md">
+        <div class="flex items-center gap-3">
+            <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
+            <h1 class="text-lg font-bold tracking-wide">Apna Billing</h1>
+        </div>
+        <div id="role-badge" class="text-xs font-bold bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-full border border-blue-500/30">Loading...</div>
+    </header>
+
+    <!-- App Sidebar (Hidden by default, slides in) -->
+    <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14">
+        <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
+        <div class="overflow-y-auto h-full pb-20">
+            <a href="index.html" class="block py-3 px-6 text-sm bg-slate-800 text-white font-bold border-l-4 border-blue-500">🏠 Dashboard</a>
+            <button onclick="logoutRole()" class="w-full text-left py-4 px-6 text-sm text-red-400 hover:bg-red-950/30 border-t border-slate-800 font-bold mt-2">🚪 Lock Screen</button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="absolute top-14 bottom-0 w-full overflow-y-auto p-4 flex flex-col gap-5 pb-10">
+        
+        <!-- Welcome Message -->
+        <div class="flex justify-between items-end mt-1">
+            <div>
+                <h2 class="text-xl font-black text-slate-800">Overview</h2>
+                <p class="text-xs text-gray-500 font-bold" id="greeting-text">Welcome back, Admin!</p>
+            </div>
+            <button onclick="window.location.reload()" class="text-[10px] bg-white text-gray-600 font-bold px-3 py-1.5 rounded-lg border shadow-sm">🔄 Refresh</button>
+        </div>
+
+        <!-- ================= TOP FINANCIAL CARDS (ADMIN ONLY) ================= -->
+        <div class="admin-only-module hidden grid-cols-1 gap-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center relative overflow-hidden">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10">Total Sales</p>
+                    <h3 class="text-xl font-black text-slate-800 mt-1 z-10">₹<span id="dash-sales">0.00</span></h3>
+                    <span class="absolute -right-3 -bottom-3 text-5xl opacity-5">💰</span>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center relative overflow-hidden">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10">Total Purchase</p>
+                    <h3 class="text-xl font-black text-slate-800 mt-1 z-10">₹<span id="dash-purchase">0.00</span></h3>
+                    <span class="absolute -right-3 -bottom-3 text-5xl opacity-5">🚚</span>
+                </div>
+            </div>
+
+            <!-- Net Profit Card (Highlight) -->
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 p-5 rounded-2xl shadow-lg text-white flex justify-between items-center relative overflow-hidden">
+                <div class="z-10">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Net Profit (Live)</p>
+                    <h3 class="text-3xl font-black text-white mt-1">₹<span id="dash-profit">0.00</span></h3>
+                </div>
+                <div class="z-10 bg-white/10 p-3 rounded-full text-2xl backdrop-blur-sm">📈</div>
+                <div class="absolute -right-4 -top-8 w-24 h-24 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
+            </div>
+        </div>
+
+        <!-- ================= APP MODULES GRID ================= -->
+        
+        <!-- SECTION 1: Daily Operations (Visible to All) -->
+        <div>
+            <h3 class="font-bold text-[11px] text-gray-400 uppercase tracking-widest mb-3 pl-1">Daily Operations</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="sell.html" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-blue-50 rounded-full flex items-center justify-center text-xl mb-2">🛒</div>
+                    <span class="font-bold text-xs text-slate-700">POS / Sell</span>
+                </a>
+                <a href="inventory.html" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-purple-50 rounded-full flex items-center justify-center text-xl mb-2">📦</div>
+                    <span class="font-bold text-xs text-slate-700">Inventory</span>
+                </a>
+                <a href="purchase.html" class="admin-only-card hidden bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-orange-50 rounded-full flex items-center justify-center text-xl mb-2">🚚</div>
+                    <span class="font-bold text-xs text-slate-700">Add Purchase</span>
+                </a>
+                <a href="add_product.html" class="admin-only-card hidden bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-emerald-50 rounded-full flex items-center justify-center text-xl mb-2">➕</div>
+                    <span class="font-bold text-xs text-slate-700">Add Product</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- SECTION 2: History & Documents (Admin Only) -->
+        <div class="admin-only-module hidden">
+            <h3 class="font-bold text-[11px] text-gray-400 uppercase tracking-widest mb-3 mt-2 pl-1">History & Documents</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="bills.html" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-gray-100 rounded-full flex items-center justify-center text-xl mb-2">📜</div>
+                    <span class="font-bold text-xs text-slate-700">Sales Bills</span>
+                </a>
+                <a href="purchase_history.html" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-stone-100 rounded-full flex items-center justify-center text-xl mb-2">📋</div>
+                    <span class="font-bold text-xs text-slate-700">Pur. History</span>
+                </a>
+                <a href="invoice.html" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-pink-50 rounded-full flex items-center justify-center text-xl mb-2">🖨️</div>
+                    <span class="font-bold text-xs text-slate-700">Invoice Viewer</span>
+                </a>
+                <a href="terq.html" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-red-50 rounded-full flex items-center justify-center text-xl mb-2">⚙️</div>
+                    <span class="font-bold text-xs text-slate-700">Terq Module</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- SECTION 3: Accounts & Reports (Admin Only) -->
+        <div class="admin-only-module hidden">
+            <h3 class="font-bold text-[11px] text-gray-400 uppercase tracking-widest mb-3 mt-2 pl-1">Accounts & Reports</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="khata.html" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-yellow-50 rounded-full flex items-center justify-center text-xl mb-2">📒</div>
+                    <span class="font-bold text-xs text-slate-700">Ledger Khata</span>
+                </a>
+                <a href="reports.html" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform">
+                    <div class="w-10 h-10 mx-auto bg-teal-50 rounded-full flex items-center justify-center text-xl mb-2">📊</div>
+                    <span class="font-bold text-xs text-slate-700">Profit & Loss</span>
+                </a>
+                <a href="gst_report.html" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center active:scale-95 transition-transform col-span-2">
+                    <div class="w-10 h-10 mx-auto bg-indigo-50 rounded-full flex items-center justify-center text-xl mb-2">🏛️</div>
+                    <span class="font-bold text-xs text-slate-700">GST Return Reports</span>
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Role Gate Control Script -->
+    <script>
+        const CORRECT_PIN = "1234"; // 👑 Admin PIN
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const currentRole = sessionStorage.getItem('userRole');
+            if (currentRole) {
+                applyRolePermissions(currentRole);
+            }
+        });
+
+        window.showAdminPinField = function() {
+            document.getElementById('pin-area').classList.remove('hidden');
+            document.getElementById('admin-pin').focus();
+        };
+
+        window.selectRole = function(role) {
+            sessionStorage.setItem('userRole', role);
+            applyRolePermissions(role);
+        };
+
+        window.verifyAdminPin = function() {
+            const enteredPin = document.getElementById('admin-pin').value;
+            if (enteredPin === CORRECT_PIN) {
+                sessionStorage.setItem('userRole', 'admin');
+                applyRolePermissions('admin');
+            } else {
+                alert("❌ Wrong Admin PIN! Try again.");
+                document.getElementById('admin-pin').value = '';
+            }
+        };
+
+        window.logoutRole = function() {
+            sessionStorage.removeItem('userRole');
+            window.location.reload();
+        };
+
+        function applyRolePermissions(role) {
+            document.getElementById('lock-screen').classList.add('hidden');
+            const badge = document.getElementById('role-badge');
+            
+            const adminModules = document.querySelectorAll('.admin-only-module');
+            const adminCards = document.querySelectorAll('.admin-only-card');
+            
+            if (role === 'admin') {
+                badge.innerText = "👑 Admin";
+                badge.className = "text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/30";
+                document.getElementById('greeting-text').innerText = "Welcome back, Admin!";
+                
+                // Show Admin Sections & Cards
+                adminModules.forEach(el => { el.classList.remove('hidden'); el.classList.add('grid'); });
+                adminCards.forEach(el => { el.classList.remove('hidden'); el.classList.add('block'); });
+                
+            } else {
+                badge.innerText = "🧑‍💼 Staff";
+                badge.className = "text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-full border border-blue-500/30";
+                document.getElementById('greeting-text').innerText = "Logged in as Staff Mode";
+                
+                // Hide Admin Sections
+                adminModules.forEach(el => { el.classList.add('hidden'); el.classList.remove('grid'); });
+                adminCards.forEach(el => { el.classList.add('hidden'); el.classList.remove('block'); });
+            }
+        }
+    </script>
+
+    <!-- Firebase Logic (For Dashboard Cards) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        
+        const app = initializeApp({ 
+            apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
+            projectId: "smartplan-96109", 
+            appId: "1:266453436752:web:bbe7047a7de525017fc455" 
+        });
+        const db = getFirestore(app);
+
+        async function calculateReports() {
+            if(sessionStorage.getItem('userRole') !== 'admin') return; 
+
+            try {
+                const salesSnap = await getDocs(collection(db, "Bills"));
+                let totalSales = 0;
+                let netProfit = 0;
+                
+                salesSnap.forEach(doc => {
+                    const bill = doc.data();
+                    totalSales += Number(bill.grandTotal || 0);
+                    
+                    if(bill.items) {
+                        bill.items.forEach(item => {
+                            let sellPrice = Number(item.sellPrice || 0);
+                            let purPrice = Number(item.purchasePrice || item.rate || 0); 
+                            netProfit += (sellPrice - purPrice);
+                        });
+                    }
+                    netProfit -= Number(bill.discount || 0);
+                });
+                document.getElementById('dash-sales').innerText = totalSales.toFixed(2);
+                document.getElementById('dash-profit').innerText = netProfit.toFixed(2);
+
+                const purchaseSnap = await getDocs(collection(db, "Purchases"));
+                let totalPurchase = 0;
+                purchaseSnap.forEach(doc => totalPurchase += Number(doc.data().totalAmount || 0));
+                document.getElementById('dash-purchase').innerText = totalPurchase.toFixed(2);
+
+            } catch (error) { console.log("Data load error"); }
+        }
+
+        const checkInterval = setInterval(() => {
+            if(document.getElementById('dash-sales').innerText === "0.00" && sessionStorage.getItem('userRole') === 'admin'){
+                calculateReports();
+                clearInterval(checkInterval);
+            }
+        }, 1000);
+    </script>
 </body>
 </html>
