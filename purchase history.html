@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Purchase History - Apna Billing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
+
+    <!-- App Header -->
+    <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md">
+        <div class="flex items-center gap-3">
+            <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
+            <h1 class="text-lg font-bold">Apna Billing</h1>
+        </div>
+        <div class="relative"><span class="text-xl">📋</span></div>
+    </header>
+
+    <!-- App Sidebar -->
+    <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14">
+        <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
+        <a href="index.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
+        <a href="sell.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
+        <a href="purchase.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🚚 Purchase Entry</a>
+        <a href="purchase_history.html" class="block py-3 px-6 text-base bg-slate-800 text-white font-bold border-b border-slate-700">📋 Purchase History</a>
+        <a href="add_product.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">➕ Add Product</a>
+        <a href="inventory.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
+        <a href="bills.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 All Bills</a>
+    </div>
+
+    <!-- MAIN CONTENT: PURCHASE LIST -->
+    <main id="main-view" class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50">
+        
+        <!-- Sticky Search & Filter Box -->
+        <div class="bg-white px-4 pt-4 pb-3 z-40 border-b border-gray-200 shadow-sm">
+            
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-bold text-slate-800">Purchase History</h2>
+                <div class="text-sm font-bold text-gray-500">Total Entries: <span id="total-entries" class="text-blue-600">0</span></div>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                    <input type="text" id="search-box" placeholder="Supplier or Invoice No..." class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium">
+                </div>
+                <div class="w-[140px]">
+                    <input type="date" id="filter-date" class="w-full py-2 px-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs font-medium text-gray-600">
+                </div>
+            </div>
+            <button onclick="clearFilters()" class="text-[11px] font-bold text-red-500 mt-2 float-right mr-1">Clear Filters ✖</button>
+        </div>
+
+        <!-- List Container -->
+        <div id="purchase-list-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pb-20">
+            <div class="text-center p-5 text-gray-500 font-bold">Loading records... ⏳</div>
+        </div>
+
+    </main>
+
+    <!-- PURCHASE DETAILS MODAL -->
+    <div id="details-view" class="hidden absolute top-0 left-0 w-full h-[100dvh] bg-gray-100 flex-col z-[70]">
+        
+        <!-- Toolbar -->
+        <div class="bg-white px-4 py-3 z-40 border-b border-gray-200 shadow-sm flex justify-between items-center">
+            <button onclick="closeDetails()" class="text-sm font-bold bg-red-100 text-red-700 px-3 py-1.5 rounded-lg flex items-center gap-1">⬅ Back</button>
+            <h2 class="text-md font-bold text-slate-800">Purchase Details</h2>
+            <div class="w-16"></div> <!-- Empty div for spacing -->
+        </div>
+
+        <!-- Details Area -->
+        <div class="flex-1 overflow-y-auto p-4 pb-20">
+            
+            <!-- Supplier Info Card -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-4">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <p class="text-xs text-gray-500 font-bold">Supplier Name</p>
+                        <h3 class="font-extrabold text-slate-800 text-lg" id="det-supplier"></h3>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 font-bold">Date</p>
+                        <span class="font-bold text-sm text-gray-700" id="det-date"></span>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-gray-100 flex justify-between">
+                    <p class="text-sm text-gray-600"><b>Invoice No:</b> <span id="det-invoice" class="text-blue-600 font-bold"></span></p>
+                </div>
+            </div>
+
+            <!-- Items List -->
+            <h3 class="font-bold text-sm text-gray-600 mb-2">Items Purchased</h3>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-gray-600 text-[10px] uppercase font-extrabold">
+                        <tr>
+                            <th class="p-3">Product Name</th>
+                            <th class="p-3 text-center">Qty</th>
+                            <th class="p-3 text-right">Rate</th>
+                            <th class="p-3 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="det-items" class="text-xs divide-y divide-gray-100">
+                        <!-- Items injected here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Grand Total -->
+            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex justify-between items-center">
+                <span class="font-bold text-blue-800">Total Purchase Amount:</span>
+                <span class="font-black text-xl text-blue-900">₹<span id="det-total"></span></span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        
+        const app = initializeApp({ 
+            apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
+            projectId: "smartplan-96109", 
+            appId: "1:266453436752:web:bbe7047a7de525017fc455" 
+        });
+        const db = getFirestore(app);
+
+        let allPurchases = [];
+
+        // 1. Fetch Purchase History
+        async function fetchPurchases() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "Purchases"));
+                allPurchases = [];
+                querySnapshot.forEach((doc) => {
+                    allPurchases.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Sort by newest first
+                allPurchases.sort((a, b) => b.timestamp - a.timestamp);
+                
+                renderPurchases(allPurchases);
+            } catch(e) {
+                document.getElementById('purchase-list-container').innerHTML = `<div class="text-center p-5 text-red-500 font-bold bg-red-50 rounded-xl border border-red-200">❌ Failed to load data! Check connection.</div>`;
+            }
+        }
+
+        // 2. Render Cards
+        function renderPurchases(list) {
+            const listDiv = document.getElementById('purchase-list-container');
+            document.getElementById('total-entries').innerText = list.length;
+            listDiv.innerHTML = ''; 
+
+            if(list.length === 0) {
+                listDiv.innerHTML = `<div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100"><div class="text-3xl mb-2">📭</div><p class="font-bold">No purchase records found!</p></div>`;
+                return;
+            }
+
+            list.forEach(p => {
+                const html = `
+                    <div onclick="viewDetails('${p.id}')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-orange-500 cursor-pointer active:scale-95 transition-transform">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-extrabold text-slate-800 text-base">${p.supplier}</h3>
+                                <p class="text-[11px] text-gray-500 font-bold">INV: ${p.invoiceNo}</p>
+                            </div>
+                            <div class="text-right">
+                                <h3 class="font-black text-lg text-orange-600">₹${p.totalAmount}</h3>
+                                <p class="text-[10px] text-gray-400">${p.date}</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-blue-600 font-bold bg-blue-50 py-1.5 px-3 rounded-lg inline-block">
+                            Total Items: ${p.items.length}
+                        </div>
+                        <div class="float-right text-gray-400 text-sm mt-1">➔</div>
+                    </div>`;
+                listDiv.innerHTML += html;
+            });
+        }
+
+        // 3. Search & Filter
+        document.getElementById('search-box').addEventListener('input', applyFilters);
+        document.getElementById('filter-date').addEventListener('change', applyFilters);
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('search-box').value.toLowerCase();
+            const dateTerm = document.getElementById('filter-date').value; 
+            
+            const filtered = allPurchases.filter(p => {
+                const matchName = (p.supplier && p.supplier.toLowerCase().includes(searchTerm)) || 
+                                  (p.invoiceNo && p.invoiceNo.toLowerCase().includes(searchTerm));
+                
+                let matchDate = true;
+                if(dateTerm) {
+                    const [y, m, d] = dateTerm.split('-');
+                    const formattedDateTerm = `${d}/${m}/${y}`; 
+                    matchDate = (p.date === formattedDateTerm);
+                }
+
+                return matchName && matchDate;
+            });
+            renderPurchases(filtered);
+        }
+
+        window.clearFilters = function() {
+            document.getElementById('search-box').value = '';
+            document.getElementById('filter-date').value = '';
+            renderPurchases(allPurchases);
+        }
+
+        // 4. View Details Logic
+        window.viewDetails = function(id) {
+            const record = allPurchases.find(x => x.id === id);
+            if(!record) return;
+
+            // Populate Info
+            document.getElementById('det-supplier').innerText = record.supplier;
+            document.getElementById('det-invoice').innerText = record.invoiceNo;
+            document.getElementById('det-date').innerText = record.date;
+            document.getElementById('det-total').innerText = record.totalAmount.toFixed(2);
+
+            // Populate Items Table
+            let tbody = '';
+            record.items.forEach(item => {
+                tbody += `
+                    <tr>
+                        <td class="p-3 font-bold text-slate-700">${item.name}</td>
+                        <td class="p-3 text-center text-gray-600">${item.qty}</td>
+                        <td class="p-3 text-right text-gray-600">₹${item.rate}</td>
+                        <td class="p-3 text-right font-bold text-slate-800">₹${item.total}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('det-items').innerHTML = tbody;
+
+            // Show View
+            document.getElementById('main-view').classList.add('hidden');
+            document.getElementById('details-view').classList.remove('hidden');
+            document.getElementById('details-view').classList.add('flex');
+        };
+
+        window.closeDetails = function() {
+            document.getElementById('details-view').classList.add('hidden');
+            document.getElementById('details-view').classList.remove('flex');
+            document.getElementById('main-view').classList.remove('hidden');
+        };
+
+        // Init
+        fetchPurchases();
+    </script>
+</body>
+</html>
