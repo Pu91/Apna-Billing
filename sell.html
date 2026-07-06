@@ -96,6 +96,11 @@
                         <label class="block text-xs font-bold text-gray-500 mb-1">Mobile Number <span class="text-red-500">*</span></label>
                         <input type="number" id="c-phone" placeholder="10-digit number" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
                     </div>
+                    <!-- NEW CUSTOMER ID FIELD ADDED HERE -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Customer ID / Proof</label>
+                        <input type="text" id="c-id" placeholder="Aadhar / Voter / Driving License" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Address</label>
                         <input type="text" id="c-address" placeholder="City / Area" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
@@ -172,6 +177,7 @@
                         <span><b>Bill No:</b> <span id="inv-id"></span></span>
                     </div>
                     <div class="mb-3 border-b border-gray-200 pb-3">
+                        <!-- CUSTOMER ID PRINT WILL APPEAR HERE -->
                         <p><b>Customer:</b> <span id="inv-cname"></span> (<span id="inv-cphone"></span>)</p>
                     </div>
                     <table class="w-full mb-3 text-left">
@@ -225,13 +231,20 @@
         </div>
     </div>
 
-    <!-- GENERAL SCANNER OVERLAY -->
-    <div id="scanner-modal" class="fixed inset-0 z-[100] hidden flex-col bg-black">
-        <div class="flex justify-between p-4 text-white bg-slate-900">
-            <h3 id="scanner-title" class="font-bold text-lg">Scan Barcode</h3>
-            <button onclick="closeScanner()" class="font-bold text-red-400 text-lg">Close ✖</button>
+    <!-- ================= BOXED SCANNER MODAL (UPDATED) ================= -->
+    <div id="scanner-modal" class="fixed inset-0 z-[100] hidden bg-black/70 items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center p-4 bg-slate-900 text-white">
+                <h3 id="scanner-title" class="font-bold text-base">Scan Barcode</h3>
+                <button onclick="closeScanner()" class="font-bold text-red-400 text-sm bg-red-400/20 px-3 py-1 rounded-lg">Close ✖</button>
+            </div>
+            <div class="p-2 bg-gray-100 flex justify-center">
+                <div id="reader" class="w-full rounded-xl overflow-hidden"></div>
+            </div>
+            <div class="p-3 text-center text-xs text-gray-500 font-bold bg-white border-t border-gray-200">
+                Point camera at the barcode
+            </div>
         </div>
-        <div id="reader" class="w-full flex-1"></div>
     </div>
 
 
@@ -289,7 +302,7 @@
             window.goToStep(3);
         };
 
-// ================= SEARCH & ADD TO CART =================
+        // ================= SEARCH & ADD TO CART =================
         document.getElementById('sell-search').addEventListener('input', (e) => {
             const txt = e.target.value.toLowerCase();
             const resBox = document.getElementById('search-results');
@@ -330,11 +343,9 @@
         window.initAddToCart = function(id) {
             const product = allProducts.find(p => p.id === id);
             
-            // যদি প্রোডাক্টের IMEI থাকে, তবে পপ-আপ দেখাও
             if(product.imeiList && product.imeiList.length > 0) {
                 pendingProductToAdd = product;
                 
-                // ফিল্টার করা: যে IMEI গুলো অলরেডি কার্টে আছে, সেগুলো বাদ দেওয়া
                 const availableImeis = product.imeiList.filter(imei => !cart.some(c => c.soldImei === imei));
                 
                 if(availableImeis.length === 0) {
@@ -353,7 +364,6 @@
                 document.getElementById('sell-imei-modal').classList.remove('hidden');
                 document.getElementById('sell-imei-modal').classList.add('flex');
             } else {
-                // IMEI না থাকলে ডিরেক্ট কার্টে অ্যাড
                 finalizeAddToCart(product, null);
             }
         };
@@ -425,7 +435,7 @@
             document.getElementById('cart-subtotal').innerText = (subtotal + totalGstAmount).toFixed(2);
         }
 
-        // ================= SCANNER LOGIC =================
+        // ================= SCANNER LOGIC (UPDATED JS FOR FLEX) =================
         window.openScanner = function() {
             scannerMode = 'product';
             document.getElementById('scanner-title').innerText = "Scan Product Barcode";
@@ -440,7 +450,8 @@
 
         function startCamera() {
             const modal = document.getElementById('scanner-modal');
-            modal.classList.remove('hidden'); modal.classList.add('flex');
+            modal.classList.remove('hidden'); 
+            modal.classList.add('flex'); // Now uses flex for centering box
 
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, (text) => {
@@ -449,7 +460,6 @@
                     document.getElementById('sell-search').value = text;
                     document.getElementById('sell-search').dispatchEvent(new Event('input'));
                 } else if(scannerMode === 'imei') {
-                    // Check if scanned IMEI exists in the dropdown list
                     const selectBox = document.getElementById('sell-imei-select');
                     let found = false;
                     for (let i = 0; i < selectBox.options.length; i++) {
@@ -478,7 +488,7 @@
             }
         };
 
-        // ================= PAYMENT & BILL GENERATION =================
+        // ================= PAYMENT & BILL GENERATION (UPDATED WITH ID) =================
         window.calculateFinalTotal = function() {
             let discount = Number(document.getElementById('s-discount').value) || 0;
             let final = (subtotal + totalGstAmount) - discount;
@@ -500,13 +510,16 @@
             const cName = document.getElementById('c-name').value;
             const cPhone = document.getElementById('c-phone').value;
             const cAddress = document.getElementById('c-address').value;
+            const cId = document.getElementById('c-id').value; // Fetching Customer ID
+            
             const discount = Number(document.getElementById('s-discount').value) || 0;
             const payMode = document.getElementById('s-paymode').value;
             const downPay = (payMode === 'EMI/Finance') ? Number(document.getElementById('s-downpay').value) : 0;
             const grandTotal = (subtotal + totalGstAmount) - discount;
 
             const billData = {
-                customer: { name: cName, phone: cPhone, address: cAddress },
+                // Saving Customer ID to database
+                customer: { name: cName, phone: cPhone, address: cAddress, idDocument: cId },
                 items: cart,
                 subtotal: subtotal, 
                 totalGst: totalGstAmount,
@@ -514,7 +527,7 @@
                 grandTotal: grandTotal,
                 paymentMode: payMode, 
                 downPayment: downPay,
-                dueBalance: (payMode === 'EMI/Finance') ? (grandTotal - downPay) : 0, // for Khata
+                dueBalance: (payMode === 'EMI/Finance') ? (grandTotal - downPay) : 0, 
                 date: new Date().toLocaleDateString('en-GB'),
                 timestamp: new Date().getTime()
             };
@@ -522,12 +535,10 @@
             try {
                 const billRef = await addDoc(collection(db, "Bills"), billData);
                 
-                // UPDATE STOCK & REMOVE IMEI FROM FIREBASE
                 for(let item of cart) {
                     const prodRef = doc(db, "Products", item.id);
                     let updateData = { stock: item.stock - 1 };
                     
-                    // If an IMEI was sold, remove it from the array
                     if(item.soldImei) {
                         updateData.imeiList = arrayRemove(item.soldImei);
                     }
@@ -544,11 +555,17 @@
         };
 
         function showInvoice(bill, billId) {
-            goToStep(4); // Shows step-invoice
+            goToStep(4); 
 
             document.getElementById('inv-date').innerText = bill.date;
             document.getElementById('inv-id').innerText = billId.slice(0, 8).toUpperCase();
-            document.getElementById('inv-cname').innerText = bill.customer.name;
+            
+            // Appending ID to name if provided
+            let customerDisplay = bill.customer.name;
+            if(bill.customer.idDocument) {
+                customerDisplay += ` (ID: ${bill.customer.idDocument})`;
+            }
+            document.getElementById('inv-cname').innerText = customerDisplay;
             document.getElementById('inv-cphone').innerText = bill.customer.phone;
 
             let tableHTML = '';
