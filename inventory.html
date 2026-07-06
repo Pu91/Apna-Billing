@@ -6,11 +6,11 @@
     <title>Inventory - Apna Billing</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Barcode Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        .active-cat { background-color: #1E293B !important; color: white !important; border-color: #1E293B !important; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
@@ -27,151 +27,67 @@
     <!-- App Sidebar -->
     <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14">
         <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
-        <a href="index.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
-        <a href="sell.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
-        <a href="add_product.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">➕ Add Product</a>
-        <a href="inventory.html" class="block py-3 px-6 text-base bg-slate-800 text-white font-bold border-b border-slate-700">📦 Inventory</a>
-        <a href="bills.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 All Bills</a>
+        <div class="overflow-y-auto h-full pb-20">
+            <a href="index.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
+            <a href="sell.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
+            
+            <div id="admin-nav-links">
+                <a href="purchase.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">🚚 Purchase Entry</a>
+                <a href="khata.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📒 Ledger Khata</a>
+                <a href="reports.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📊 P&L Reports</a>
+                <a href="add_product.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">➕ Add Product</a>
+            </div>
+            
+            <a href="inventory.html" class="block py-3 px-6 text-sm bg-slate-800 text-white font-bold border-l-4 border-blue-500 border-b border-slate-700">📦 Inventory</a>
+            <a href="bills.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 Sales History</a>
+        </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <main class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50">
         
-        <!-- Sticky Search & Filters -->
-        <div class="bg-gray-50 px-4 pt-3 pb-2 z-40 border-b border-gray-200 shadow-sm">
+        <!-- Search and Scanner Section -->
+        <div class="bg-white px-4 py-4 z-40 border-b border-gray-200 shadow-sm shrink-0">
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-lg font-bold text-slate-800">Inventory</h2>
-                <div class="text-sm font-bold text-gray-500">Total: <span id="total-count">0</span></div>
+                <h2 class="text-lg font-bold text-slate-800">Stock Inventory</h2>
+                <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">Total Items: <span id="total-items">0</span></span>
             </div>
 
-            <!-- Search & Scan Bar -->
-            <div class="flex gap-2 mb-3">
+            <div class="flex gap-2 relative">
                 <div class="relative flex-1">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
-                    <input type="text" id="search-box" placeholder="Name or Barcode..." class="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                    <input type="text" id="search-box" placeholder="Search by name or barcode..." autocomplete="off" class="w-full pl-9 pr-3 py-3 bg-gray-50 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-bold">
                 </div>
-                <button onclick="openScanner()" class="bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold shadow-md hover:bg-blue-700 text-lg">📷</button>
-            </div>
-
-            <!-- Dynamic Category Chips -->
-            <div class="flex overflow-x-auto gap-2 pb-1 hide-scroll" id="category-filters">
-                <button onclick="filterCategory('All', this)" class="cat-btn active-cat whitespace-nowrap px-4 py-1.5 bg-white border border-gray-300 text-gray-600 font-bold rounded-full text-sm">All</button>
+                <!-- Camera Button -->
+                <button onclick="openScanner()" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 text-xl active:scale-95 transition-transform">📷</button>
             </div>
         </div>
 
-        <!-- Product List -->
-        <div id="product-list" class="flex-1 overflow-y-auto px-4 py-3 pb-20 flex flex-col gap-3">
-            <div class="text-center p-5 text-gray-500 font-bold">Loading inventory... ⏳</div>
+        <!-- Inventory List Container -->
+        <div id="inventory-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pb-24">
+            <div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100 mt-5">
+                <p class="font-bold text-sm">Loading stock details... ⏳</p>
+            </div>
         </div>
+
     </main>
 
-    <!-- 1. SCANNER MODAL -->
+    <!-- GENERAL SCANNER OVERLAY -->
     <div id="scanner-modal" class="fixed inset-0 z-[100] hidden flex-col bg-black">
-        <div class="flex justify-between p-4 text-white bg-slate-900">
-            <h3 class="font-bold text-lg">Scan Barcode</h3>
-            <button onclick="closeScanner()" class="font-bold text-red-400 text-lg">Close ✖</button>
+        <div class="flex justify-between items-center p-4 text-white bg-slate-900 border-b border-slate-700">
+            <h3 class="font-bold text-sm uppercase tracking-widest">Scan Barcode / IMEI</h3>
+            <button onclick="closeScanner()" class="font-bold text-red-400 text-xs bg-red-400/20 px-3 py-1.5 rounded-lg">Close ✖</button>
         </div>
-        <div id="reader" class="w-full flex-1"></div>
-    </div>
-
-    <!-- 2. VIEW PRODUCT MODAL -->
-    <div id="view-modal" class="fixed inset-0 z-[80] hidden bg-black/50 transition-opacity duration-300 opacity-0 justify-end">
-        <div class="bg-white rounded-t-3xl p-5 w-full max-h-[80vh] overflow-y-auto transform translate-y-full transition-transform duration-300 modal-content">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-xl text-slate-800">Product Details</h3>
-                <button onclick="closeModal('view-modal')" class="bg-gray-200 text-gray-600 rounded-full w-8 h-8 font-bold">✖</button>
-            </div>
-            <div id="view-details" class="space-y-3 text-sm text-gray-700">
-                <!-- Data will be injected here -->
-            </div>
+        <div class="w-full bg-black flex-1 flex flex-col justify-center relative">
+            <div id="reader" class="w-full"></div>
+            <p class="text-center text-gray-400 text-xs mt-6 absolute bottom-10 w-full font-bold">Point camera at the product barcode to search</p>
         </div>
     </div>
 
-    <!-- 3. EDIT PRODUCT MODAL (আপনার দেওয়া Add Product ফর্মের হুবহু কপি) -->
-    <div id="edit-modal" class="fixed inset-0 z-[90] hidden bg-black/50 transition-opacity duration-300 opacity-0 justify-end">
-        <div class="bg-white rounded-t-3xl p-4 w-full h-[95vh] flex flex-col transform translate-y-full transition-transform duration-300 modal-content">
-            
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-lg font-bold text-slate-700">Edit Product</h2>
-                <button onclick="closeModal('edit-modal')" class="text-xs bg-red-100 text-red-600 font-bold py-1.5 px-3 rounded-lg border border-red-200">Cancel</button>
-            </div>
-
-            <!-- Form Box (আপনার ডিজাইনের মতো) -->
-            <div class="bg-white p-2 flex-1 flex flex-col overflow-y-auto">
-                <input type="hidden" id="e-id">
-
-                <div class="mb-3">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Barcode / IMEI</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="e-barcode" placeholder="Scan or type here..." class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Product Name</label>
-                    <input type="text" id="e-name" placeholder="e.g. Samsung Galaxy S24" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div class="relative">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Category</label>
-                        <div class="relative">
-                            <input type="text" id="e-category" placeholder="Type/Select" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none pr-8 text-sm" onclick="toggleDropdown('e-cat-dropdown')">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="toggleDropdown('e-cat-dropdown')">
-                                <span class="text-gray-500 font-bold">^</span>
-                            </div>
-                        </div>
-                        <div id="e-cat-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-32 overflow-y-auto">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
-
-                    <div class="relative">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">GST (%)</label>
-                        <div class="relative">
-                            <input type="number" id="e-gst" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none pr-8 text-sm" onclick="toggleDropdown('e-gst-dropdown')">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="toggleDropdown('e-gst-dropdown')">
-                                <span class="text-gray-500 font-bold">^</span>
-                            </div>
-                        </div>
-                        <div id="e-gst-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-32 overflow-y-auto">
-                            <div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('e-gst', '0', 'e-gst-dropdown')">0%</div>
-                            <div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('e-gst', '12', 'e-gst-dropdown')">12%</div>
-                            <div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('e-gst', '18', 'e-gst-dropdown')">18%</div>
-                            <div class="p-2 hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('e-gst', '28', 'e-gst-dropdown')">28%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">M.R.P (₹)</label>
-                        <input type="number" id="e-mrp" placeholder="0.00" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Sell Price (₹)</label>
-                        <input type="number" id="e-sell" placeholder="0.00" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none text-sm font-bold text-green-700">
-                    </div>
-                </div>
-
-                <div class="mb-5">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Total Stock (Qty)</label>
-                    <input type="number" id="e-stock" placeholder="10" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
-                </div>
-
-                <!-- Update Button (স্লাইডারের বদলে বাটন দেওয়া হয়েছে যাতে এডিট করতে সুবিধা হয়) -->
-                <div class="mt-auto pt-2 pb-4">
-                    <button onclick="saveEditedProduct()" id="btn-save-edit" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-md text-lg">💾 Save Changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- UI & Firebase Script -->
+    <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
         
         const app = initializeApp({ 
             apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
@@ -181,248 +97,145 @@
         const db = getFirestore(app);
 
         let allProducts = [];
-        let currentCategory = 'All';
+        let html5QrCode = null;
+        let userRole = sessionStorage.getItem('userRole') || 'staff'; // Default to staff
 
-        // Dropdown Logic
-        window.toggleDropdown = function(id) {
-            document.getElementById(id).classList.toggle('hidden');
-        }
-        window.selectOption = function(inputId, value, dropdownId) {
-            document.getElementById(inputId).value = value;
-            document.getElementById(dropdownId).classList.add('hidden');
+        // Hide admin links if staff
+        if (userRole !== 'admin') {
+            document.getElementById('admin-nav-links').classList.add('hidden');
         }
 
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.relative')) {
-                document.getElementById('e-cat-dropdown')?.classList.add('hidden');
-                document.getElementById('e-gst-dropdown')?.classList.add('hidden');
-            }
-        });
-
-        // Load Products
-        async function fetchProducts() {
+        async function loadInventory() {
             try {
                 const querySnapshot = await getDocs(collection(db, "Products"));
                 allProducts = [];
-                let categories = new Set(["Mobile", "Smartwatch", "Accessories", "Smart TV"]); 
-
-                querySnapshot.forEach((doc) => {
-                    let data = { id: doc.id, ...doc.data() };
-                    allProducts.push(data);
-                    if(data.category) categories.add(data.category);
+                querySnapshot.forEach(doc => {
+                    allProducts.push({ id: doc.id, ...doc.data() });
                 });
-
-                renderCategoryChips(categories);
-                populateEditCategoryDropdown(categories);
-                applyFilters(); 
+                
+                document.getElementById('total-items').innerText = allProducts.length;
+                renderInventory(allProducts);
             } catch(e) {
-                document.getElementById('product-list').innerHTML = `<div class="text-center p-5 text-red-500 font-bold bg-red-50 rounded-xl">❌ Failed to load! Check internet.</div>`;
+                document.getElementById('inventory-container').innerHTML = `<p class="text-center text-red-500 font-bold mt-5">Failed to load inventory!</p>`;
             }
         }
 
-        // Edit ফর্মে ক্যাটাগরি পপুলেট করা
-        function populateEditCategoryDropdown(categories) {
-            const catDiv = document.getElementById('e-cat-dropdown');
-            catDiv.innerHTML = '';
-            categories.forEach(cat => {
-                catDiv.innerHTML += `<div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('e-category', '${cat}', 'e-cat-dropdown')">${cat}</div>`;
-            });
-        }
-
-        // Main পেজে ক্যাটাগরি চিপস
-        function renderCategoryChips(categories) {
-            const filterDiv = document.getElementById('category-filters');
-            filterDiv.innerHTML = `<button onclick="filterCategory('All', this)" class="cat-btn active-cat whitespace-nowrap px-4 py-1.5 bg-white border border-gray-300 text-gray-600 font-bold rounded-full text-sm">All</button>`;
-            
-            categories.forEach(cat => {
-                filterDiv.innerHTML += `<button onclick="filterCategory('${cat}', this)" class="cat-btn whitespace-nowrap px-4 py-1.5 bg-white border border-gray-300 text-gray-600 font-bold rounded-full text-sm">${cat}</button>`;
-            });
-        }
-
-        function renderProducts(productsToRender) {
-            const listDiv = document.getElementById('product-list');
-            document.getElementById('total-count').innerText = productsToRender.length;
-            listDiv.innerHTML = ''; 
+        function renderInventory(productsToRender) {
+            const container = document.getElementById('inventory-container');
+            container.innerHTML = '';
 
             if(productsToRender.length === 0) {
-                listDiv.innerHTML = `<div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100"><p class="font-bold">No products found!</p></div>`;
+                container.innerHTML = `<div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100 mt-5"><p class="font-bold text-sm">No products found!</p></div>`;
                 return;
             }
 
             productsToRender.forEach(p => {
-                const isLowStock = p.stock < 5;
-                const badge = isLowStock ? 'bg-red-100 text-red-700 border-red-200' : 'bg-green-100 text-green-700 border-green-200';
-                
-                const html = `
-                    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
-                        <div class="flex justify-between items-start">
+                let stockClass = p.stock > 5 ? "text-green-600 bg-green-50 border-green-200" : (p.stock > 0 ? "text-orange-600 bg-orange-50 border-orange-200" : "text-red-600 bg-red-50 border-red-200");
+                let stockText = p.stock > 0 ? `${p.stock} in Stock` : "Out of Stock";
+
+                // Staff security: Hide purchase price and supplier from staff
+                let adminInfo = '';
+                if(userRole === 'admin') {
+                    adminInfo = `
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-dashed border-gray-200">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Purchase Rate: <span class="text-slate-700">₹${p.purchasePrice || 0}</span></p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Supplier: <span class="text-slate-700">${p.supplier || 'N/A'}</span></p>
+                        </div>
+                    `;
+                }
+
+                // Show IMEI list if exists
+                let imeiDisplay = '';
+                if(p.imeiList && p.imeiList.length > 0) {
+                    imeiDisplay = `<p class="text-[9px] text-blue-600 font-bold bg-blue-50 inline-block px-1.5 py-0.5 rounded mt-1 border border-blue-100">Has ${p.imeiList.length} IMEIs tracked</p>`;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-2">
                             <div>
-                                <h3 class="font-bold text-slate-800 text-base leading-tight">${p.name}</h3>
-                                <p class="text-[11px] text-gray-500 mt-0.5">📁 ${p.category} | 🏷️ ${p.barcode || 'N/A'}</p>
+                                <h3 class="font-black text-slate-800 text-sm">${p.name}</h3>
+                                <p class="text-[10px] text-gray-400 font-bold mt-0.5">Barcode: ${p.barcode || 'N/A'}</p>
+                                ${imeiDisplay}
                             </div>
-                            <div class="text-right">
-                                <h3 class="font-extrabold text-lg text-slate-800">₹${p.sellPrice}</h3>
-                                <span class="text-[10px] px-2 py-0.5 rounded border font-bold ${badge}">Stock: ${p.stock}</span>
-                            </div>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded border ${stockClass}">${stockText}</span>
                         </div>
                         
-                        <div class="flex gap-2 mt-1 pt-2 border-t border-gray-100">
-                            <button onclick="viewProduct('${p.id}')" class="flex-1 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100">👁️ View</button>
-                            <button onclick="editProduct('${p.id}')" class="flex-1 bg-orange-50 text-orange-600 py-1.5 rounded-lg text-xs font-bold hover:bg-orange-100">✏️ Edit</button>
-                            <button onclick="deleteProduct('${p.id}', '${p.name}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100">🗑️ Delete</button>
+                        <div class="flex justify-between items-center mt-3">
+                            <div>
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Selling Price</p>
+                                <h4 class="font-extrabold text-blue-600 text-base mt-0.5">₹${p.sellPrice || 0}</h4>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">GST Slab</p>
+                                <h4 class="font-extrabold text-slate-700 text-base mt-0.5">${p.gst || 0}%</h4>
+                            </div>
                         </div>
-                    </div>`;
-                listDiv.innerHTML += html;
+                        ${adminInfo}
+                    </div>
+                `;
             });
         }
 
-        window.filterCategory = function(cat, btnElement) {
-            currentCategory = cat;
-            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active-cat'));
-            btnElement.classList.add('active-cat');
-            applyFilters();
-        };
+        // Search Functionality
+        document.getElementById('search-box').addEventListener('input', (e) => {
+            const txt = e.target.value.toLowerCase();
+            const filtered = allProducts.filter(p => 
+                p.name.toLowerCase().includes(txt) || 
+                (p.barcode && p.barcode.toLowerCase().includes(txt)) ||
+                (p.imeiList && p.imeiList.some(imei => imei.toLowerCase().includes(txt)))
+            );
+            renderInventory(filtered);
+        });
 
-        document.getElementById('search-box').addEventListener('input', applyFilters);
-
-        function applyFilters() {
-            const searchTerm = document.getElementById('search-box').value.toLowerCase();
-            const filtered = allProducts.filter(p => {
-                const matchSearch = p.name.toLowerCase().includes(searchTerm) || (p.barcode && p.barcode.toLowerCase().includes(searchTerm));
-                const matchCat = currentCategory === 'All' || p.category === currentCategory;
-                return matchSearch && matchCat;
-            });
-            renderProducts(filtered);
-        }
-
-        // Modal Controls
-        window.openModal = function(id) {
-            const modal = document.getElementById(id);
-            const content = modal.querySelector('.modal-content');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.classList.add('opacity-100');
-                content.classList.remove('translate-y-full');
-                content.classList.add('translate-y-0');
-            }, 10);
-        };
-
-        window.closeModal = function(id) {
-            const modal = document.getElementById(id);
-            const content = modal.querySelector('.modal-content');
-            
-            modal.classList.remove('opacity-100');
-            modal.classList.add('opacity-0');
-            content.classList.remove('translate-y-0');
-            content.classList.add('translate-y-full');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 300);
-        };
-window.viewProduct = function(id) {
-            const p = allProducts.find(x => x.id === id);
-            if(!p) return;
-            
-            document.getElementById('view-details').innerHTML = `
-                <div class="flex justify-between border-b pb-2"><b>Name:</b> <span>${p.name}</span></div>
-                <div class="flex justify-between border-b pb-2"><b>Barcode:</b> <span>${p.barcode || 'N/A'}</span></div>
-                <div class="flex justify-between border-b pb-2"><b>Category:</b> <span>${p.category}</span></div>
-                <div class="flex justify-between border-b pb-2"><b>Stock:</b> <span>${p.stock} Pcs</span></div>
-                <div class="flex justify-between border-b pb-2"><b>MRP:</b> <span>₹${p.mrp}</span></div>
-                <div class="flex justify-between border-b pb-2"><b>Sell Price:</b> <span class="text-green-600 font-bold">₹${p.sellPrice}</span></div>
-                <div class="flex justify-between border-b pb-2"><b>GST:</b> <span>${p.gst || 0}%</span></div>
-            `;
-            openModal('view-modal');
-        };
-
-        window.deleteProduct = async function(id, name) {
-            if(confirm(`Are you sure you want to delete "${name}"?`)) {
-                try {
-                    await deleteDoc(doc(db, "Products", id));
-                    allProducts = allProducts.filter(p => p.id !== id);
-                    applyFilters(); 
-                    alert("✅ Deleted Successfully!");
-                } catch(e) {
-                    alert("❌ Error deleting product!");
-                }
-            }
-        };
-
-        // Edit Button Click Logic
-        window.editProduct = function(id) {
-            const p = allProducts.find(x => x.id === id);
-            if(!p) return;
-            
-            // Populating exactly into your provided form format
-            document.getElementById('e-id').value = p.id;
-            document.getElementById('e-barcode').value = p.barcode || '';
-            document.getElementById('e-name').value = p.name || '';
-            document.getElementById('e-category').value = p.category || '';
-            document.getElementById('e-gst').value = p.gst || 0;
-            document.getElementById('e-mrp').value = p.mrp || '';
-            document.getElementById('e-sell').value = p.sellPrice || '';
-            document.getElementById('e-stock').value = p.stock || 0;
-            
-            openModal('edit-modal');
-        };
-
-        window.saveEditedProduct = async function() {
-            const id = document.getElementById('e-id').value;
-            const btn = document.getElementById('btn-save-edit');
-            btn.innerText = "Saving...";
-
-            const updatedData = {
-                barcode: document.getElementById('e-barcode').value,
-                name: document.getElementById('e-name').value,
-                category: document.getElementById('e-category').value,
-                gst: Number(document.getElementById('e-gst').value),
-                mrp: Number(document.getElementById('e-mrp').value),
-                sellPrice: Number(document.getElementById('e-sell').value),
-                stock: Number(document.getElementById('e-stock').value)
-            };
-
-            try {
-                await updateDoc(doc(db, "Products", id), updatedData);
-                alert("✅ Updated Successfully!");
-                closeModal('edit-modal');
-                fetchProducts(); 
-            } catch(e) {
-                alert("❌ Update failed!");
-            }
-            btn.innerText = "💾 Save Changes";
-        };
-
-        // Scanner Logic
-        let html5QrCode;
+        // ================= SCANNER LOGIC =================
         window.openScanner = function() {
             const modal = document.getElementById('scanner-modal');
-            modal.classList.remove('hidden');
+            modal.classList.remove('hidden'); 
             modal.classList.add('flex');
 
             html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
-                document.getElementById('search-box').value = text;
-                applyFilters(); 
-                window.closeScanner();
-            }, (err) => {});
+            
+            // This will prompt for camera permission automatically
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: { width: 250, height: 100 } }, 
+                (decodedText) => {
+                    // On Success: Beep/Vibrate (if supported) and Search
+                    if(navigator.vibrate) navigator.vibrate(100);
+                    
+                    document.getElementById('search-box').value = decodedText;
+                    document.getElementById('search-box').dispatchEvent(new Event('input')); // Trigger search
+                    
+                    closeScanner(); // Auto close
+                }, 
+                (err) => {
+                    // Ignore continuous scanning errors
+                }
+            ).catch(err => {
+                alert("Please allow Camera permission to use the scanner!");
+                closeScanner();
+            });
         };
 
         window.closeScanner = function() {
             if(html5QrCode) {
                 html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    html5QrCode = null;
                     const modal = document.getElementById('scanner-modal');
-                    modal.classList.add('hidden');
+                    modal.classList.add('hidden'); 
                     modal.classList.remove('flex');
-                }).catch(err => console.log(err));
+                }).catch(e => {
+                    const modal = document.getElementById('scanner-modal');
+                    modal.classList.add('hidden'); 
+                    modal.classList.remove('flex');
+                });
             }
         };
 
-        fetchProducts();
+        // Initialize Data
+        loadInventory();
     </script>
 </body>
 </html>
