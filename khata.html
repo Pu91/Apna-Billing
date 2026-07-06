@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Khata Book - Apna Billing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
+
+    <!-- App Header -->
+    <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md">
+        <div class="flex items-center gap-3">
+            <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
+            <h1 class="text-lg font-bold">Apna Billing</h1>
+        </div>
+        <div class="text-sm font-semibold text-slate-300">📒 Ledger Khata</div>
+    </header>
+
+    <!-- App Sidebar -->
+    <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14">
+        <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
+        <a href="index.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
+        <a href="sell.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
+        <a href="purchase.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🚚 Purchase Entry</a>
+        <a href="khata.html" class="block py-3 px-6 text-base bg-slate-800 text-white font-bold border-b border-slate-700">📒 Ledger Khata</a>
+        <a href="reports.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📊 P&L Reports</a>
+        <a href="inventory.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
+        <a href="bills.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 All Bills</a>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50">
+        
+        <!-- Tab Switcher (Customer vs Supplier) -->
+        <div class="bg-white border-b border-gray-200 shadow-sm flex no-print">
+            <button id="tab-cust" onclick="switchTab('customer')" class="flex-1 py-3 text-center text-sm font-black border-b-2 border-blue-600 text-blue-600">🧑‍💼 Customer Dues</button>
+            <button id="tab-supp" onclick="switchTab('supplier')" class="flex-1 py-3 text-center text-sm font-bold text-gray-500 border-b-2 border-transparent">🚚 Supplier Khata</button>
+        </div>
+
+        <!-- Sticky Search Box -->
+        <div class="bg-white px-4 py-3 border-b border-gray-100 shadow-sm">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                <input type="text" id="search-khata" placeholder="Search by name..." class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+            </div>
+        </div>
+
+        <!-- Khata List Container -->
+        <div id="khata-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pb-24">
+            <div class="text-center p-5 text-gray-500 font-bold">Loading Khata details... ⏳</div>
+        </div>
+
+    </main>
+
+    <!-- PAYMENT UPDATE MODAL -->
+    <div id="update-modal" class="hidden fixed inset-0 bg-black/50 z-[100] items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-2xl p-5 shadow-2xl space-y-4">
+            <h3 class="font-black text-slate-800 text-base border-b pb-2">💵 Clear Balance / Due</h3>
+            <p class="text-xs text-gray-500">Party: <b id="modal-party-name" class="text-slate-800"></b></p>
+            <p class="text-xs text-gray-500">Current Due: <b class="text-red-500">₹<span id="modal-current-due">0.00</span></b></p>
+            
+            <div>
+                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Amount Received/Paid (₹)</label>
+                <input type="number" id="update-amount" placeholder="Enter amount" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm">
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 font-bold py-2 rounded-xl text-xs border text-gray-600">Cancel</button>
+                <button id="btn-submit-payment" onclick="submitPaymentUpdate()" class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs shadow-md">Update Account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        
+        const app = initializeApp({ 
+            apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
+            projectId: "smartplan-96109", 
+            appId: "1:266453436752:web:bbe7047a7de525017fc455" 
+        });
+        const db = getFirestore(app);
+
+        let currentTab = 'customer';
+        let customerDues = [];
+        let supplierDues = [];
+        let activeRecord = null;
+
+        // Load Data from Firebase
+        async function fetchKhataData() {
+            try {
+                // 1. Fetch Customer Bills (Look for EMI/Finance dues)
+                const billsSnap = await getDocs(collection(db, "Bills"));
+                customerDues = [];
+                billsSnap.forEach(docSnap => {
+                    const bill = docSnap.data();
+                    if(bill.paymentMode === 'EMI/Finance') {
+                        // Due = Grand Total - Downpayment - (any previously cleared dues if implemented)
+                        // For simplicity, we calculate remaining from bill, but we allow updating it.
+                        // If you updated it on firebase, we will check if due balance field exists.
+                        let remainingDue = bill.dueBalance !== undefined ? bill.dueBalance : (bill.grandTotal - (bill.downPayment || 0));
+                        
+                        if(remainingDue > 0) {
+                            customerDues.push({
+                                id: docSnap.id,
+                                name: bill.customer.name,
+                                phone: bill.customer.phone,
+                                due: remainingDue,
+                                date: bill.date,
+                                type: 'bill'
+                            });
+                        }
+                    }
+                });
+
+                // 2. Fetch Supplier Purchases (Assuming standard purchase entry has a due system or total amount)
+                const purSnap = await getDocs(collection(db, "Purchases"));
+                supplierDues = [];
+                purSnap.forEach(docSnap => {
+                    const pur = docSnap.data();
+                    let remainingDue = pur.dueBalance !== undefined ? pur.dueBalance : pur.totalAmount;
+                    
+                    if(remainingDue > 0) {
+                        supplierDues.push({
+                            id: docSnap.id,
+                            name: pur.supplier,
+                            invoice: pur.invoiceNo || 'N/A',
+                            due: remainingDue,
+                            date: pur.date,
+                            type: 'purchase'
+                        });
+                    }
+                });
+
+                renderKhata();
+            } catch (error) {
+                document.getElementById('khata-container').innerHTML = `<p class="text-center text-red-500 font-bold">Failed to load Khata!</p>`;
+            }
+        }
+
+        function renderKhata() {
+            const container = document.getElementById('khata-container');
+            const searchTxt = document.getElementById('search-khata').value.toLowerCase();
+            container.innerHTML = '';
+
+            let listToRender = currentTab === 'customer' ? customerDues : supplierDues;
+            
+            // Apply Search filter
+            listToRender = listToRender.filter(x => x.name.toLowerCase().includes(searchTxt));
+
+            if(listToRender.length === 0) {
+                container.innerHTML = `<div class="text-center p-8 text-gray-400 bg-white rounded-xl border border-gray-100 mt-5"><p class="font-bold text-xs">All cleared! No pending dues here. 🎉</p></div>`;
+                return;
+            }
+
+            listToRender.forEach(item => {
+                let subText = currentTab === 'customer' ? `📞 ${item.phone} • 📅 ${item.date}` : `📄 Inv: ${item.invoice} • 📅 ${item.date}`;
+                
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-black text-slate-800 text-sm">${item.name}</h4>
+                            <p class="text-[10px] text-gray-400 mt-0.5">${subText}</p>
+                        </div>
+                        <div class="text-right flex items-center gap-3">
+                            <div>
+                                <p class="text-[9px] font-bold text-gray-400 uppercase">Pending Due</p>
+                                <h3 class="font-black text-base text-red-500">₹${item.due.toFixed(2)}</h3>
+                            </div>
+                            <button onclick="openPaymentModal('${item.id}', '${item.name}', ${item.due}, '${item.type}')" class="bg-emerald-50 text-emerald-700 font-extrabold text-xs px-3 py-2 rounded-xl border border-emerald-100 hover:bg-emerald-100 shadow-sm">
+                                Clear 💵
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Tab Switching
+        window.switchTab = function(tab) {
+            currentTab = tab;
+            const cBtn = document.getElementById('tab-cust');
+            const sBtn = document.getElementById('tab-supp');
+
+            if(tab === 'customer') {
+                cBtn.className = "flex-1 py-3 text-center text-sm font-black border-b-2 border-blue-600 text-blue-600";
+                sBtn.className = "flex-1 py-3 text-center text-sm font-bold text-gray-500 border-b-2 border-transparent";
+            } else {
+                sBtn.className = "flex-1 py-3 text-center text-sm font-black border-b-2 border-blue-600 text-blue-600";
+                cBtn.className = "flex-1 py-3 text-center text-sm font-bold text-gray-500 border-b-2 border-transparent";
+            }
+            renderKhata();
+        };
+
+        // Search trigger
+        document.getElementById('search-khata').addEventListener('input', renderKhata);
+
+        // Modal Controls
+        window.openPaymentModal = function(id, name, due, type) {
+            activeRecord = { id, name, due, type };
+            document.getElementById('modal-party-name').innerText = name;
+            document.getElementById('modal-current-due').innerText = due.toFixed(2);
+            document.getElementById('update-amount').value = '';
+            
+            const modal = document.getElementById('update-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('update-modal').classList.add('hidden');
+            document.getElementById('update-modal').classList.remove('flex');
+            activeRecord = null;
+        };
+
+        window.submitPaymentUpdate = async function() {
+            const amt = Number(document.getElementById('update-amount').value);
+            if(!amt || amt <= 0 || amt > activeRecord.due) {
+                alert("Please enter a valid amount (not greater than the current due)!");
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-payment');
+            btn.innerText = "Updating...⏳";
+            btn.disabled = true;
+
+            try {
+                let newDue = activeRecord.due - amt;
+                let collectionName = activeRecord.type === 'bill' ? 'Bills' : 'Purchases';
+                
+                const docRef = doc(db, collectionName, activeRecord.id);
+                await updateDoc(docRef, {
+                    dueBalance: newDue
+                });
+
+                alert("✅ Account ledger updated successfully!");
+                closeModal();
+                fetchKhataData(); // Refresh list
+            } catch (error) {
+                alert("❌ Error updating payment!");
+            }
+            btn.innerText = "Update Account";
+            btn.disabled = false;
+        };
+
+        // Init
+        fetchKhataData();
+    </script>
+</body>
+</html>
