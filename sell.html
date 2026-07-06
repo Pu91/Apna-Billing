@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sell Product - Apna Billing</title>
+    <title>Sell Product (with IMEI) - Apna Billing</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Barcode Scanner -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Print Styles for Invoice */
         @media print {
             body * { visibility: hidden; }
             #invoice-print-area, #invoice-print-area * { visibility: visible; }
@@ -37,6 +34,10 @@
         <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
         <a href="index.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
         <a href="sell.html" class="block py-3 px-6 text-base bg-slate-800 text-white font-bold border-b border-slate-700">🛒 Sell Product</a>
+        <a href="purchase.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🚚 Purchase Entry</a>
+        <a href="purchase_history.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📋 Purchase History</a>
+        <a href="reports.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📊 P&L Reports</a>
+        <a href="khata.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📒 Ledger Khata</a>
         <a href="add_product.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">➕ Add Product</a>
         <a href="inventory.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
         <a href="bills.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 All Bills</a>
@@ -45,7 +46,7 @@
     <!-- Main Content Area -->
     <main class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50">
         
-        <!-- ================= STEP 1: CART & SEARCH ================= -->
+        <!-- ================= STEP 1: CART ================= -->
         <div id="step-1" class="flex flex-col h-full">
             <div class="bg-white px-4 pt-4 pb-2 z-40 border-b border-gray-200 shadow-sm no-print">
                 <div class="flex justify-between items-center mb-3">
@@ -53,32 +54,25 @@
                     <a href="index.html" class="text-xs bg-red-100 text-red-600 font-bold py-1.5 px-3 rounded-lg border border-red-200">Cancel</a>
                 </div>
 
-                <!-- Search & Scan Bar -->
                 <div class="flex gap-2 relative">
                     <div class="relative flex-1">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
-                        <input type="text" id="sell-search" placeholder="Search name or barcode..." autocomplete="off" class="w-full pl-9 pr-3 py-3 bg-gray-50 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        <input type="text" id="sell-search" placeholder="Search product..." autocomplete="off" class="w-full pl-9 pr-3 py-3 bg-gray-50 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
                     </div>
                     <button onclick="openScanner()" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 text-xl">📷</button>
-                    
-                    <!-- Search Results Popup -->
                     <div id="search-results" class="hidden absolute top-[100%] left-0 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto z-50"></div>
                 </div>
             </div>
 
-            <!-- Cart Items Container -->
             <div id="cart-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pb-24">
                 <div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100 mt-10">
-                    <div class="text-4xl mb-2">🛒</div>
-                    <p class="font-bold text-sm">Your cart is empty!</p>
-                    <p class="text-xs mt-1">Search or scan product to add</p>
+                    <div class="text-4xl mb-2">🛒</div><p class="font-bold text-sm">Your cart is empty!</p>
                 </div>
             </div>
 
-            <!-- Sticky Bottom Checkout Bar -->
             <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-40 no-print">
                 <div class="flex justify-between items-center mb-3">
-                    <span class="text-gray-500 font-bold text-sm">Total Items: <span id="cart-qty" class="text-blue-600">0</span></span>
+                    <span class="text-gray-500 font-bold text-sm">Items: <span id="cart-qty" class="text-blue-600">0</span></span>
                     <span class="text-slate-800 font-extrabold text-xl">₹<span id="cart-subtotal">0.00</span></span>
                 </div>
                 <button onclick="goToStep(2)" class="w-full bg-green-600 text-white font-bold py-3.5 rounded-xl shadow-md text-lg">Next: Customer ➔</button>
@@ -86,77 +80,68 @@
         </div>
 
 
-        <!-- ================= STEP 2: CUSTOMER DETAILS ================= -->
+        <!-- ================= STEP 2: CUSTOMER ================= -->
         <div id="step-2" class="hidden flex-col h-full">
             <div class="bg-white px-4 py-4 z-40 border-b border-gray-200 shadow-sm flex items-center gap-3">
                 <button onclick="goToStep(1)" class="text-xl font-bold text-gray-600">⬅</button>
                 <h2 class="text-lg font-bold text-slate-800">Step 2: Customer Info</h2>
             </div>
-
             <div class="flex-1 overflow-y-auto p-4 pb-24">
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Customer Name <span class="text-red-500">*</span></label>
-                        <input type="text" id="c-name" placeholder="John Doe" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        <input type="text" id="c-name" placeholder="John Doe" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Mobile Number <span class="text-red-500">*</span></label>
-                        <input type="number" id="c-phone" placeholder="10-digit number" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        <input type="number" id="c-phone" placeholder="10-digit number" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Address</label>
-                        <input type="text" id="c-address" placeholder="City / Area" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">ID Document (Aadhar/PAN)</label>
-                        <input type="text" id="c-doc" placeholder="Optional" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        <input type="text" id="c-address" placeholder="City / Area" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
                     </div>
                 </div>
             </div>
-
             <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-40">
                 <button onclick="goToPaymentStep()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-md text-lg">Next: Payment ➔</button>
             </div>
         </div>
 
 
-        <!-- ================= STEP 3: PAYMENT & DISCOUNT ================= -->
+        <!-- ================= STEP 3: PAYMENT ================= -->
         <div id="step-3" class="hidden flex-col h-full">
             <div class="bg-white px-4 py-4 z-40 border-b border-gray-200 shadow-sm flex items-center gap-3">
                 <button onclick="goToStep(2)" class="text-xl font-bold text-gray-600">⬅</button>
                 <h2 class="text-lg font-bold text-slate-800">Step 3: Payment</h2>
             </div>
-
             <div class="flex-1 overflow-y-auto p-4 pb-32">
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                    
-                    <!-- Subtotal Display -->
-                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-200">
-                        <span class="font-bold text-gray-600 text-sm">Subtotal:</span>
-                        <span class="font-extrabold text-slate-800 text-lg">₹<span id="p-subtotal">0.00</span></span>
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <span class="font-bold text-gray-600 text-sm">Subtotal (Items):</span>
+                        <span class="font-bold text-slate-800 text-sm">₹<span id="p-subtotal">0.00</span></span>
                     </div>
-
+                    <div class="flex justify-between items-center bg-blue-50 p-2 rounded-lg border border-blue-100">
+                        <span class="font-bold text-blue-700 text-sm">Total GST Added:</span>
+                        <span class="font-extrabold text-blue-800 text-sm">+ ₹<span id="p-gst-total">0.00</span></span>
+                    </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Discount Amount (₹)</label>
-                        <input type="number" id="s-discount" value="0" oninput="calculateFinalTotal()" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm text-red-600 font-bold">
+                        <input type="number" id="s-discount" value="0" oninput="calculateFinalTotal()" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-red-600 font-bold">
                     </div>
-
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Payment Mode</label>
-                        <select id="s-paymode" onchange="toggleEmiField()" class="w-full py-3 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-bold text-slate-700 appearance-none">
+                        <select id="s-paymode" onchange="toggleEmiField()" class="w-full py-3 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-slate-700">
                             <option value="Cash">💵 Cash</option>
                             <option value="Online/UPI">📱 Online / UPI</option>
                             <option value="EMI/Finance">💳 EMI / Finance</option>
                         </select>
                     </div>
-
                     <div id="emi-downpayment-div" class="hidden">
                         <label class="block text-xs font-bold text-gray-500 mb-1">Downpayment Paid (₹)</label>
-                        <input type="number" id="s-downpay" value="0" class="w-full py-2.5 px-3 bg-green-50 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none text-sm font-bold text-green-700">
+                        <input type="number" id="s-downpay" value="0" class="w-full py-2.5 px-3 bg-green-50 border border-green-200 rounded-xl text-sm font-bold text-green-700">
                     </div>
                 </div>
             </div>
-
             <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-40">
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-gray-500 font-bold text-sm">Grand Total:</span>
@@ -169,40 +154,31 @@
 
         <!-- ================= INVOICE PREVIEW ================= -->
         <div id="step-invoice" class="hidden flex-col h-full bg-gray-200">
-            <!-- Toolbar -->
             <div class="bg-white px-4 py-3 z-40 border-b border-gray-200 shadow-sm flex justify-between items-center no-print">
                 <button onclick="location.reload()" class="text-sm font-bold bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg">➕ New Bill</button>
                 <div class="flex gap-2">
-                    <button onclick="window.print()" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-sm">🖨️ Print</button>
-                    <button id="btn-whatsapp" class="bg-green-500 text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-sm">💬 Share</button>
+                    <button onclick="window.print()" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg font-bold text-sm">🖨️ Print</button>
                 </div>
             </div>
-
-            <!-- Printable A4 / Receipt Box -->
             <div class="flex-1 overflow-y-auto p-4 flex justify-center">
                 <div id="invoice-print-area" class="bg-white p-6 rounded-sm shadow-md w-full max-w-[400px] text-xs text-gray-800 self-start">
-                    
                     <div class="text-center border-b-2 border-dashed border-gray-300 pb-3 mb-3">
                         <h2 class="text-xl font-extrabold text-slate-800">APNA BILLING STORE</h2>
                         <p class="text-[10px] text-gray-500">Siliguri, West Bengal | Ph: 9876543210</p>
                         <div class="inline-block bg-slate-800 text-white font-bold px-3 py-1 rounded-full mt-2 text-[10px]">TAX INVOICE</div>
                     </div>
-
                     <div class="flex justify-between mb-1">
                         <span><b>Date:</b> <span id="inv-date"></span></span>
                         <span><b>Bill No:</b> <span id="inv-id"></span></span>
                     </div>
                     <div class="mb-3 border-b border-gray-200 pb-3">
                         <p><b>Customer:</b> <span id="inv-cname"></span> (<span id="inv-cphone"></span>)</p>
-                        <p class="text-[10px]"><b>Address:</b> <span id="inv-caddress"></span></p>
-                        <p class="text-[10px]"><b>ID No:</b> <span id="inv-cdoc"></span></p>
                     </div>
-
                     <table class="w-full mb-3 text-left">
                         <thead>
                             <tr class="border-b border-gray-300">
-                                <th class="pb-1 w-[60%]">Item</th>
-                                <th class="pb-1 text-center">Qty</th>
+                                <th class="pb-1 w-[60%]">Item & IMEI</th>
+                                <th class="pb-1 text-center">GST</th>
                                 <th class="pb-1 text-right">Price</th>
                             </tr>
                         </thead>
@@ -210,33 +186,49 @@
                             <!-- Items Injected Here -->
                         </tbody>
                     </table>
-
                     <div class="border-t-2 border-dashed border-gray-300 pt-2 mb-3 text-right">
                         <p>Subtotal: ₹<span id="inv-subtotal"></span></p>
-                        <p class="text-red-500">Discount: - ₹<span id="inv-discount"></span></p>
-                        <h3 class="font-extrabold text-base mt-1">Grand Total: ₹<span id="inv-grand"></span></h3>
+                        <p>Total GST: + ₹<span id="inv-gst"></span></p>
+                        <p class="text-red-500 border-b border-gray-200 pb-1 mb-1">Discount: - ₹<span id="inv-discount"></span></p>
+                        <h3 class="font-extrabold text-base">Grand Total: ₹<span id="inv-grand"></span></h3>
                     </div>
-
                     <div class="bg-gray-100 p-2 rounded text-[10px] mb-8">
                         <p><b>Payment Mode:</b> <span id="inv-paymode"></span></p>
                         <p id="inv-emi-row" class="hidden text-green-700 font-bold"><b>Downpayment Paid:</b> ₹<span id="inv-downpay"></span></p>
                     </div>
-                    
-                    <div class="flex justify-between mt-10 pt-2 border-t border-gray-300">
-                        <p class="text-center w-1/2">Customer Sign</p>
-                        <p class="text-center w-1/2">Authorized Sign</p>
-                    </div>
-                    <p class="text-center mt-4 text-[9px] text-gray-400">Thank you for shopping with us!</p>
                 </div>
             </div>
         </div>
-
     </main>
 
-    <!-- SCANNER MODAL (from Inventory page) -->
+
+    <!-- ================= IMEI SELECTION MODAL ================= -->
+    <div id="sell-imei-modal" class="hidden fixed inset-0 bg-black/60 z-[90] items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl relative">
+            <h3 class="font-black text-slate-800 text-base mb-1">Select IMEI to Sell</h3>
+            <p class="text-xs text-blue-600 font-bold mb-4" id="sell-imei-prod-name"></p>
+            
+            <label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Choose from Stock or Scan</label>
+            <div class="flex gap-2 mb-4">
+                <select id="sell-imei-select" class="flex-1 py-2.5 px-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-700 outline-none">
+                    <!-- Options injected here -->
+                </select>
+                <button onclick="startSellImeiScanner()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 rounded-lg shadow-sm font-bold text-lg">
+                    📷
+                </button>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="closeSellImeiModal()" class="flex-1 bg-red-50 text-red-600 font-bold py-2.5 rounded-xl text-sm border border-red-100">Cancel</button>
+                <button onclick="confirmAddWithImei()" class="flex-1 bg-green-600 text-white font-bold py-2.5 rounded-xl text-sm shadow-md">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERAL SCANNER OVERLAY -->
     <div id="scanner-modal" class="fixed inset-0 z-[100] hidden flex-col bg-black">
         <div class="flex justify-between p-4 text-white bg-slate-900">
-            <h3 class="font-bold text-lg">Scan Barcode</h3>
+            <h3 id="scanner-title" class="font-bold text-lg">Scan Barcode</h3>
             <button onclick="closeScanner()" class="font-bold text-red-400 text-lg">Close ✖</button>
         </div>
         <div id="reader" class="w-full flex-1"></div>
@@ -246,7 +238,7 @@
     <!-- ================= JAVASCRIPT LOGIC ================= -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, arrayRemove } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
         
         const app = initializeApp({ 
             apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
@@ -258,50 +250,47 @@
         let allProducts = [];
         let cart = [];
         let subtotal = 0;
+        let totalGstAmount = 0;
+        let pendingProductToAdd = null; // Holds product temporarily before IMEI selection
+        let html5QrCode;
+        let scannerMode = 'product'; // 'product' or 'imei'
 
-        // 1. Fetch Products for Search
         async function loadProducts() {
             try {
                 const querySnapshot = await getDocs(collection(db, "Products"));
                 querySnapshot.forEach(doc => {
                     allProducts.push({ id: doc.id, ...doc.data() });
                 });
-            } catch(e) {
-                alert("Failed to load products from database!");
-            }
+            } catch(e) { alert("Failed to load products!"); }
         }
         loadProducts();
 
-        // 2. Navigation Steps
         window.goToStep = function(step) {
             if(step === 2 && cart.length === 0) {
                 alert("Please add at least one product to cart!"); return;
             }
-            document.getElementById('step-1').classList.add('hidden');
-            document.getElementById('step-1').classList.remove('flex');
-            document.getElementById('step-2').classList.add('hidden');
-            document.getElementById('step-2').classList.remove('flex');
-            document.getElementById('step-3').classList.add('hidden');
-            document.getElementById('step-3').classList.remove('flex');
-            document.getElementById('step-invoice').classList.add('hidden');
-            document.getElementById('step-invoice').classList.remove('flex');
-
-            document.getElementById(`step-${step}`).classList.remove('hidden');
-            document.getElementById(`step-${step}`).classList.add('flex');
+            ['step-1', 'step-2', 'step-3', 'step-invoice'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(id).classList.remove('flex');
+            });
+            let target = step === 4 ? 'step-invoice' : `step-${step}`;
+            document.getElementById(target).classList.remove('hidden');
+            document.getElementById(target).classList.add('flex');
         };
 
         window.goToPaymentStep = function() {
             const name = document.getElementById('c-name').value;
             const phone = document.getElementById('c-phone').value;
-            if(!name || !phone) {
-                alert("Customer Name and Phone Number are required!"); return;
-            }
+            if(!name || !phone) { alert("Name and Phone required!"); return; }
+            
             document.getElementById('p-subtotal').innerText = subtotal.toFixed(2);
+            document.getElementById('p-gst-total').innerText = totalGstAmount.toFixed(2);
             window.calculateFinalTotal();
             window.goToStep(3);
         };
 
-     document.getElementById('sell-search').addEventListener('input', (e) => {
+// ================= SEARCH & ADD TO CART =================
+        document.getElementById('sell-search').addEventListener('input', (e) => {
             const txt = e.target.value.toLowerCase();
             const resBox = document.getElementById('search-results');
             if(txt.length < 2) { resBox.classList.add('hidden'); return; }
@@ -314,16 +303,18 @@
             } else {
                 matches.forEach(p => {
                     const isOutOfStock = p.stock < 1;
-                    const stockCol = isOutOfStock ? '<span class="text-red-500 text-xs font-bold">Out of Stock</span>' : `<span class="text-green-600 text-xs font-bold">Stock: ${p.stock}</span>`;
+                    const stockCol = isOutOfStock ? '<span class="text-red-500 text-xs font-bold">Out of Stock</span>' : `<span class="text-green-600 text-[10px] font-bold">Stock: ${p.stock}</span>`;
+                    const hasImeiBadge = (p.imeiList && p.imeiList.length > 0) ? `<span class="bg-blue-100 text-blue-700 text-[8px] px-1 rounded">IMEI</span>` : '';
+                    
                     const btnHtml = isOutOfStock 
                         ? `<button disabled class="bg-gray-200 text-gray-400 px-3 py-1.5 rounded-lg text-xs font-bold">Add</button>`
-                        : `<button onclick="addToCart('${p.id}')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-200">Add ➕</button>`;
+                        : `<button onclick="initAddToCart('${p.id}')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-200">Add ➕</button>`;
                     
                     resBox.innerHTML += `
                         <div class="p-3 border-b border-gray-100 flex justify-between items-center hover:bg-gray-50">
                             <div>
-                                <h4 class="font-bold text-sm text-slate-800">${p.name}</h4>
-                                ${stockCol}
+                                <h4 class="font-bold text-sm text-slate-800">${p.name} ${hasImeiBadge}</h4>
+                                <p class="text-[10px] text-gray-500 font-bold">${stockCol} | GST: ${p.gst || 0}%</p>
                             </div>
                             <div class="flex items-center gap-3">
                                 <span class="font-extrabold text-slate-800 text-sm">₹${p.sellPrice}</span>
@@ -335,18 +326,59 @@
             resBox.classList.remove('hidden');
         });
 
-        window.addToCart = function(id) {
+        // 1. Initial Add Click
+        window.initAddToCart = function(id) {
             const product = allProducts.find(p => p.id === id);
-            if(!product) return;
             
-            // Check if already in cart to manage Qty (For simplicity, adding as separate line item like original logic, or you can merge quantities)
-            // Here we add as single item (Qty 1) per click
-            cart.push({...product});
+            // যদি প্রোডাক্টের IMEI থাকে, তবে পপ-আপ দেখাও
+            if(product.imeiList && product.imeiList.length > 0) {
+                pendingProductToAdd = product;
+                
+                // ফিল্টার করা: যে IMEI গুলো অলরেডি কার্টে আছে, সেগুলো বাদ দেওয়া
+                const availableImeis = product.imeiList.filter(imei => !cart.some(c => c.soldImei === imei));
+                
+                if(availableImeis.length === 0) {
+                    alert("All available IMEIs for this product are already in your cart!");
+                    return;
+                }
+
+                document.getElementById('sell-imei-prod-name').innerText = product.name;
+                const selectBox = document.getElementById('sell-imei-select');
+                selectBox.innerHTML = '<option value="">-- Select IMEI --</option>';
+                
+                availableImeis.forEach(imei => {
+                    selectBox.innerHTML += `<option value="${imei}">${imei}</option>`;
+                });
+
+                document.getElementById('sell-imei-modal').classList.remove('hidden');
+                document.getElementById('sell-imei-modal').classList.add('flex');
+            } else {
+                // IMEI না থাকলে ডিরেক্ট কার্টে অ্যাড
+                finalizeAddToCart(product, null);
+            }
+        };
+
+        window.closeSellImeiModal = function() {
+            document.getElementById('sell-imei-modal').classList.add('hidden');
+            document.getElementById('sell-imei-modal').classList.remove('flex');
+            pendingProductToAdd = null;
+        };
+
+        // 2. Finalize Add to Cart (With or Without IMEI)
+        window.confirmAddWithImei = function() {
+            const selectedImei = document.getElementById('sell-imei-select').value;
+            if(!selectedImei) { alert("Please select or scan an IMEI!"); return; }
             
+            finalizeAddToCart(pendingProductToAdd, selectedImei);
+            closeSellImeiModal();
+        };
+
+        function finalizeAddToCart(product, imeiStr) {
+            cart.push({ ...product, soldImei: imeiStr });
             document.getElementById('sell-search').value = '';
             document.getElementById('search-results').classList.add('hidden');
             updateCartUI();
-        };
+        }
 
         window.removeFromCart = function(index) {
             cart.splice(index, 1);
@@ -355,13 +387,10 @@
 
         function updateCartUI() {
             const container = document.getElementById('cart-container');
-            subtotal = 0;
+            subtotal = 0; totalGstAmount = 0;
             
             if(cart.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100 mt-10">
-                        <div class="text-4xl mb-2">🛒</div><p class="font-bold text-sm">Your cart is empty!</p>
-                    </div>`;
+                container.innerHTML = `<div class="text-center p-8 text-gray-400 bg-white rounded-2xl border border-gray-100 mt-10"><div class="text-4xl mb-2">🛒</div><p class="font-bold text-sm">Your cart is empty!</p></div>`;
                 document.getElementById('cart-qty').innerText = '0';
                 document.getElementById('cart-subtotal').innerText = '0.00';
                 return;
@@ -369,27 +398,90 @@
             
             container.innerHTML = '';
             cart.forEach((item, index) => {
-                subtotal += Number(item.sellPrice);
+                let price = Number(item.sellPrice);
+                let gstPercent = Number(item.gst) || 0;
+                let itemGstAmt = (price * gstPercent) / 100;
+                
+                subtotal += price; 
+                totalGstAmount += itemGstAmt;
+
+                let imeiDisplay = item.soldImei ? `<p class="text-[9px] text-blue-600 font-bold bg-blue-50 inline-block px-1 rounded mt-1">IMEI: ${item.soldImei}</p>` : '';
+
                 container.innerHTML += `
                     <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center border-l-4 border-l-blue-500">
                         <div>
                             <h3 class="font-bold text-slate-800 text-sm leading-tight">${item.name}</h3>
-                            <p class="text-[10px] text-gray-500 mt-0.5">Barcode: ${item.barcode || 'N/A'}</p>
+                            ${imeiDisplay}
+                            <p class="text-[10px] text-gray-500 mt-0.5">Price: ₹${price} | GST: ₹${itemGstAmt.toFixed(2)}</p>
                         </div>
-                        <div class="flex items-center gap-4">
-                            <span class="font-extrabold text-sm text-slate-800">₹${item.sellPrice}</span>
-                            <button onclick="removeFromCart(${index})" class="text-red-500 font-bold bg-red-50 w-8 h-8 rounded-full flex items-center justify-center text-lg hover:bg-red-100">✖</button>
+                        <div class="flex items-center gap-3">
+                            <span class="font-extrabold text-sm text-slate-800">₹${(price + itemGstAmt).toFixed(2)}</span>
+                            <button onclick="removeFromCart(${index})" class="text-red-500 font-bold bg-red-50 w-7 h-7 rounded-full flex items-center justify-center hover:bg-red-100">✖</button>
                         </div>
                     </div>`;
             });
+            
             document.getElementById('cart-qty').innerText = cart.length;
-            document.getElementById('cart-subtotal').innerText = subtotal.toFixed(2);
+            document.getElementById('cart-subtotal').innerText = (subtotal + totalGstAmount).toFixed(2);
         }
 
-        // 4. Payment Logic
+        // ================= SCANNER LOGIC =================
+        window.openScanner = function() {
+            scannerMode = 'product';
+            document.getElementById('scanner-title').innerText = "Scan Product Barcode";
+            startCamera();
+        };
+
+        window.startSellImeiScanner = function() {
+            scannerMode = 'imei';
+            document.getElementById('scanner-title').innerText = "Scan IMEI Barcode";
+            startCamera();
+        };
+
+        function startCamera() {
+            const modal = document.getElementById('scanner-modal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, (text) => {
+                
+                if(scannerMode === 'product') {
+                    document.getElementById('sell-search').value = text;
+                    document.getElementById('sell-search').dispatchEvent(new Event('input'));
+                } else if(scannerMode === 'imei') {
+                    // Check if scanned IMEI exists in the dropdown list
+                    const selectBox = document.getElementById('sell-imei-select');
+                    let found = false;
+                    for (let i = 0; i < selectBox.options.length; i++) {
+                        if (selectBox.options[i].value === text) {
+                            selectBox.selectedIndex = i;
+                            found = true;
+                            alert("✅ IMEI Matched!");
+                            break;
+                        }
+                    }
+                    if(!found) {
+                        alert("❌ Scanned IMEI not found in available stock for this product!");
+                    }
+                }
+                closeScanner();
+            }, (err) => {});
+        }
+
+        window.closeScanner = function() {
+            if(html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    const modal = document.getElementById('scanner-modal');
+                    modal.classList.add('hidden'); modal.classList.remove('flex');
+                }).catch(e => {});
+            }
+        };
+
+        // ================= PAYMENT & BILL GENERATION =================
         window.calculateFinalTotal = function() {
             let discount = Number(document.getElementById('s-discount').value) || 0;
-            let final = subtotal - discount;
+            let final = (subtotal + totalGstAmount) - discount;
             if(final < 0) final = 0;
             document.getElementById('final-total').innerText = final.toFixed(2);
         };
@@ -397,86 +489,85 @@
         window.toggleEmiField = function() {
             const mode = document.getElementById('s-paymode').value;
             const emiDiv = document.getElementById('emi-downpayment-div');
-            if(mode === 'EMI/Finance') {
-                emiDiv.classList.remove('hidden');
-            } else {
-                emiDiv.classList.add('hidden');
-            }
+            if(mode === 'EMI/Finance') emiDiv.classList.remove('hidden');
+            else emiDiv.classList.add('hidden');
         };
 
-        // 5. Generate Bill & Save to Firebase
         window.generateBill = async function() {
             const btn = document.getElementById('btn-generate-bill');
-            btn.innerText = "Saving Bill... ⏳";
-            btn.disabled = true;
+            btn.innerText = "Saving Bill... ⏳"; btn.disabled = true;
 
             const cName = document.getElementById('c-name').value;
             const cPhone = document.getElementById('c-phone').value;
             const cAddress = document.getElementById('c-address').value;
-            const cDoc = document.getElementById('c-doc').value;
-            
             const discount = Number(document.getElementById('s-discount').value) || 0;
             const payMode = document.getElementById('s-paymode').value;
             const downPay = (payMode === 'EMI/Finance') ? Number(document.getElementById('s-downpay').value) : 0;
-            const grandTotal = subtotal - discount;
+            const grandTotal = (subtotal + totalGstAmount) - discount;
 
             const billData = {
-                customer: { name: cName, phone: cPhone, address: cAddress, doc: cDoc },
+                customer: { name: cName, phone: cPhone, address: cAddress },
                 items: cart,
-                subtotal: subtotal, discount: discount, grandTotal: grandTotal,
-                paymentMode: payMode, downPayment: downPay,
-                date: new Date().toLocaleDateString('en-GB'), // DD/MM/YYYY format
+                subtotal: subtotal, 
+                totalGst: totalGstAmount,
+                discount: discount, 
+                grandTotal: grandTotal,
+                paymentMode: payMode, 
+                downPayment: downPay,
+                dueBalance: (payMode === 'EMI/Finance') ? (grandTotal - downPay) : 0, // for Khata
+                date: new Date().toLocaleDateString('en-GB'),
                 timestamp: new Date().getTime()
             };
 
             try {
-                // Save Bill
                 const billRef = await addDoc(collection(db, "Bills"), billData);
                 
-                // Reduce Stock in Background
+                // UPDATE STOCK & REMOVE IMEI FROM FIREBASE
                 for(let item of cart) {
                     const prodRef = doc(db, "Products", item.id);
-                    await updateDoc(prodRef, { stock: item.stock - 1 });
+                    let updateData = { stock: item.stock - 1 };
+                    
+                    // If an IMEI was sold, remove it from the array
+                    if(item.soldImei) {
+                        updateData.imeiList = arrayRemove(item.soldImei);
+                    }
+                    
+                    await updateDoc(prodRef, updateData);
                 }
 
                 alert("✅ Bill Generated Successfully!");
                 showInvoice(billData, billRef.id);
             } catch (e) { 
                 alert("❌ Error generating bill!"); 
-                btn.innerText = "💾 Generate Bill";
-                btn.disabled = false;
+                btn.innerText = "💾 Generate Bill"; btn.disabled = false;
             }
         };
 
         function showInvoice(bill, billId) {
-            document.getElementById('step-3').classList.add('hidden');
-            document.getElementById('step-3').classList.remove('flex');
-            
-            const invoiceDiv = document.getElementById('step-invoice');
-            invoiceDiv.classList.remove('hidden');
-            invoiceDiv.classList.add('flex');
+            goToStep(4); // Shows step-invoice
 
-            // Populate Invoice
             document.getElementById('inv-date').innerText = bill.date;
             document.getElementById('inv-id').innerText = billId.slice(0, 8).toUpperCase();
             document.getElementById('inv-cname').innerText = bill.customer.name;
             document.getElementById('inv-cphone').innerText = bill.customer.phone;
-            document.getElementById('inv-caddress').innerText = bill.customer.address || 'N/A';
-            document.getElementById('inv-cdoc').innerText = bill.customer.doc || 'N/A';
 
             let tableHTML = '';
             bill.items.forEach(item => {
-                let gstTxt = item.gst ? ` (+${item.gst}% GST)` : '';
+                let itemGstAmt = (Number(item.sellPrice) * Number(item.gst || 0)) / 100;
+                let finalItemPrice = Number(item.sellPrice) + itemGstAmt;
+                let imeiRow = item.soldImei ? `<br><span class="text-[9px] text-gray-500 font-bold">IMEI: ${item.soldImei}</span>` : '';
+                
                 tableHTML += `
                     <tr class="border-b border-gray-100">
-                        <td class="py-1"><b>${item.name}</b><br><span class="text-[9px] text-gray-500">${item.barcode||'-'} ${gstTxt}</span></td>
-                        <td class="text-center py-1">1</td>
-                        <td class="text-right py-1">₹${item.sellPrice}</td>
+                        <td class="py-1.5 leading-tight"><b>${item.name}</b>${imeiRow}</td>
+                        <td class="text-center py-1.5 text-[10px] text-gray-500">${item.gst||0}%</td>
+                        <td class="text-right py-1.5 font-bold">₹${finalItemPrice.toFixed(2)}</td>
                     </tr>`;
             });
             document.getElementById('inv-table-body').innerHTML = tableHTML;
 
             document.getElementById('inv-subtotal').innerText = bill.subtotal.toFixed(2);
+            document.getElementById('inv-gst').innerText = bill.totalGst.toFixed(2);
             document.getElementById('inv-discount').innerText = bill.discount.toFixed(2);
             document.getElementById('inv-grand').innerText = bill.grandTotal.toFixed(2);
             document.getElementById('inv-paymode').innerText = bill.paymentMode;
@@ -488,38 +579,7 @@
             } else {
                 emiRow.classList.add('hidden');
             }
-
-            // WhatsApp Share link
-            const waText = `Hello ${bill.customer.name},\nThank you for shopping at Apna Billing!\n\n🧾 Bill Details:\nBill No: ${billId.slice(0,8).toUpperCase()}\nAmount: ₹${bill.grandTotal}\nDate: ${bill.date}\nPayment: ${bill.paymentMode}\n\nHave a great day!`;
-            document.getElementById('btn-whatsapp').onclick = () => window.open(`https://wa.me/91${bill.customer.phone}?text=${encodeURIComponent(waText)}`, '_blank');
         }
-
-        // 6. Scanner Logic (Camera)
-        let html5QrCode;
-        window.openScanner = function() {
-            const modal = document.getElementById('scanner-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-
-            html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
-                document.getElementById('sell-search').value = text;
-                // Trigger input event to search auto
-                document.getElementById('sell-search').dispatchEvent(new Event('input'));
-                window.closeScanner();
-            }, (err) => {});
-        };
-
-        window.closeScanner = function() {
-            if(html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    const modal = document.getElementById('scanner-modal');
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }).catch(err => console.log(err));
-            }
-        };
-
     </script>
 </body>
 </html>
