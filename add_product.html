@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Add Product - Apna Billing</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -15,7 +14,6 @@
 </head>
 <body class="bg-gray-50 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
 
-    <!-- Security Overlay for Staff -->
     <div id="access-denied" class="fixed inset-0 bg-slate-900 z-[200] hidden flex-col items-center justify-center p-6 text-white">
         <div class="text-6xl mb-4">⛔</div>
         <h2 class="text-2xl font-black mb-2 text-red-500">Access Denied!</h2>
@@ -23,7 +21,6 @@
         <a href="index.html" class="bg-blue-600 hover:bg-blue-700 py-3 px-8 rounded-xl font-bold shadow-md">Go to Dashboard</a>
     </div>
 
-    <!-- App Header -->
     <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md">
         <div class="flex items-center gap-3">
             <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
@@ -32,7 +29,6 @@
         <div class="relative"><span class="text-xl">➕</span></div>
     </header>
 
-    <!-- App Sidebar -->
     <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14">
         <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
         <div class="overflow-y-auto h-full pb-20">
@@ -47,7 +43,6 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <main class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50 smooth-scroll">
         
         <div class="bg-white px-4 py-4 z-40 border-b border-gray-200 shadow-sm shrink-0">
@@ -58,7 +53,6 @@
         <div class="flex-1 overflow-y-auto p-4 pb-28">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                 
-                <!-- Barcode -->
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Barcode (Optional)</label>
                     <div class="flex gap-2">
@@ -67,13 +61,11 @@
                     </div>
                 </div>
 
-                <!-- Product Name -->
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Product Name <span class="text-red-500">*</span></label>
                     <input type="text" id="p-name" placeholder="e.g. Samsung Galaxy S24 Ultra" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800 outline-none">
                 </div>
 
-                <!-- Category & GST -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Category <span class="text-red-500">*</span></label>
@@ -97,7 +89,6 @@
                     </div>
                 </div>
 
-                <!-- Pricing -->
                 <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 grid grid-cols-2 gap-3">
                     <div class="col-span-2">
                         <label class="block text-[10px] font-black text-gray-400 mb-1 uppercase tracking-wider">Purchase Rate (₹) <span class="text-red-500">*</span></label>
@@ -113,7 +104,6 @@
                     </div>
                 </div>
 
-                <!-- IMEI Tracking Toggle -->
                 <div class="flex items-center justify-between bg-blue-50 p-3 rounded-xl border border-blue-100">
                     <div>
                         <h4 class="font-bold text-blue-800 text-sm">Track IMEI Numbers?</h4>
@@ -125,13 +115,11 @@
                     </label>
                 </div>
 
-                <!-- Stock Normal (Hidden if IMEI tracked) -->
                 <div id="normal-stock-div">
                     <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Total Stock Quantity <span class="text-red-500">*</span></label>
                     <input type="number" id="p-stock" placeholder="e.g. 10" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800 outline-none">
                 </div>
 
-                <!-- IMEI Section -->
                 <div id="imei-section" class="hidden flex-col gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">Scan / Enter IMEI</label>
                     <div class="flex gap-2">
@@ -154,7 +142,6 @@
             </div>
         </div>
 
-        <!-- Sticky Save Button -->
         <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-40">
             <button id="btn-save" onclick="saveProduct()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md text-lg transition-colors">
                 💾 Save Product
@@ -162,7 +149,6 @@
         </div>
     </main>
 
-    <!-- BOXED SCANNER MODAL -->
     <div id="scanner-modal" class="fixed inset-0 z-[100] hidden bg-black/70 items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl flex flex-col">
             <div class="flex justify-between items-center p-4 bg-slate-900 text-white">
@@ -178,7 +164,6 @@
         </div>
     </div>
 
-    <!-- Firebase Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
@@ -209,21 +194,29 @@
                 imeiDiv.classList.remove('hidden');
                 imeiDiv.classList.add('flex');
                 stockDiv.classList.add('hidden');
-                document.getElementById('p-stock').value = ''; // clear normal stock
+                document.getElementById('p-stock').value = ''; 
             } else {
                 imeiDiv.classList.add('hidden');
                 imeiDiv.classList.remove('flex');
                 stockDiv.classList.remove('hidden');
-                imeiArray = []; // reset array
+                imeiArray = []; 
                 renderImeiList();
             }
         };
 
         window.addImeiToList = function() {
             const input = document.getElementById('imei-input');
-            const val = input.value.trim();
+            const val = input.value.trim().replace(/[-\s]/g, '');
             
             if(!val) return;
+            
+            // ১৫ ডিজিটের ভ্যালিডেশন (ম্যানুয়াল টাইপের ক্ষেত্রেও চেক করবে)
+            const imeiPattern = /^\d{15}$/;
+            if(!imeiPattern.test(val)) {
+                alert("❌ Input must be a valid 15-digit number!");
+                return;
+            }
+
             if(imeiArray.includes(val)) {
                 alert("This IMEI is already in the list!");
                 return;
@@ -261,7 +254,7 @@
 
         // --- SCANNER LOGIC ---
         let html5QrCode;
-        let scanTarget = ''; // 'barcode' or 'imei'
+        let scanTarget = ''; 
 
         window.openScanner = function(targetType) {
             scanTarget = targetType;
@@ -273,13 +266,24 @@
 
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, (text) => {
+                
+                let scannedText = text.trim().replace(/[-\s]/g, '');
+
                 if(scanTarget === 'barcode') {
-                    document.getElementById('p-barcode').value = text;
+                    document.getElementById('p-barcode').value = scannedText;
+                    closeScanner();
                 } else if(scanTarget === 'imei') {
-                    document.getElementById('imei-input').value = text;
-                    addImeiToList(); // auto add after scan
+                    // 🚨 ১৫ ডিজিটের পিওর নম্বর ফিল্টার
+                    const imeiPattern = /^\d{15}$/;
+                    
+                    if (imeiPattern.test(scannedText)) {
+                        document.getElementById('imei-input').value = scannedText;
+                        addImeiToList(); 
+                        closeScanner();  
+                    } else {
+                        console.log("Ignored: Not a valid 15-digit IMEI -> " + scannedText);
+                    }
                 }
-                closeScanner();
             }, (err) => {});
         };
 
@@ -307,7 +311,6 @@
             
             const isImeiTracked = document.getElementById('imei-toggle').checked;
             
-            // Validation
             if(!name) { alert("Product Name is required!"); return; }
             if(purchasePrice <= 0) { alert("Purchase Rate is required!"); return; }
             if(sellPrice <= 0) { alert("Sell Price is required!"); return; }
@@ -340,9 +343,9 @@
             try {
                 await addDoc(collection(db, "Products"), productData);
                 alert("✅ Product Added Successfully!");
-                window.location.reload(); // Refresh to clear form
+                window.location.reload(); 
             } catch(e) {
-            alert("❌ Failed to add product. Check internet connection.");
+                alert("❌ Failed to add product. Check internet connection.");
                 btn.innerHTML = "💾 Save Product";
                 btn.disabled = false;
             }
