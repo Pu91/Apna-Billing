@@ -8,14 +8,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        .slider-thumb { transition: transform 0.2s ease; }
-        .slider-thumb.dragging { transition: none; }
-        /* কাস্টম স্ক্রলবার লুকানোর জন্য (যদি ছোট ফোনে হালকা স্ক্রল লাগে) */
-        ::-webkit-scrollbar { display: none; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .smooth-scroll { -webkit-overflow-scrolling: touch !important; }
     </style>
 </head>
-<!-- পেজটিকে ফিক্সড করার জন্য fixed, inset-0, h-[100dvh] এবং overflow-hidden ব্যবহার করা হয়েছে -->
-<body class="bg-gray-100 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
+<body class="bg-gray-50 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
+
+    <!-- Security Overlay for Staff -->
+    <div id="access-denied" class="fixed inset-0 bg-slate-900 z-[200] hidden flex-col items-center justify-center p-6 text-white">
+        <div class="text-6xl mb-4">⛔</div>
+        <h2 class="text-2xl font-black mb-2 text-red-500">Access Denied!</h2>
+        <p class="text-sm text-slate-400 text-center mb-8">Only Admins can add new products.</p>
+        <a href="index.html" class="bg-blue-600 hover:bg-blue-700 py-3 px-8 rounded-xl font-bold shadow-md">Go to Dashboard</a>
+    </div>
 
     <!-- App Header -->
     <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md">
@@ -23,202 +29,159 @@
             <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
             <h1 class="text-lg font-bold">Apna Billing</h1>
         </div>
-        <div class="relative">
-            <span class="text-xl">🔔</span>
-            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">0</span>
-        </div>
+        <div class="relative"><span class="text-xl">➕</span></div>
     </header>
 
     <!-- App Sidebar -->
     <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14">
         <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
-        <a href="index.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
-        <a href="sell.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
-        <a href="add_product.html" class="block py-3 px-6 text-base bg-slate-800 text-white font-bold border-b border-slate-700">➕ Add Product</a>
-        <a href="inventory.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
-        <a href="bills.html" class="block py-3 px-6 text-base hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 All Bills</a>
+        <div class="overflow-y-auto h-full pb-20">
+            <a href="index.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
+            <a href="sell.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
+            <a href="purchase.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">🚚 Purchase Entry</a>
+            <a href="khata.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📒 Ledger Khata</a>
+            <a href="reports.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📊 P&L Reports</a>
+            <a href="add_product.html" class="block py-3 px-6 text-sm bg-slate-800 text-white font-bold border-l-4 border-blue-500 border-b border-slate-700">➕ Add Product</a>
+            <a href="inventory.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
+            <a href="bills.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 Sales History</a>
+        </div>
     </div>
 
-    <!-- Main Content (উচ্চতা ফিক্সড করা হয়েছে) -->
-    <main class="absolute top-14 bottom-0 w-full overflow-y-auto px-4 py-3">
-        <div class="max-w-lg mx-auto h-full flex flex-col">
-            
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-lg font-bold text-slate-700">Add New Product</h2>
-                <a href="index.html" class="text-xs bg-red-100 text-red-600 font-bold py-1.5 px-3 rounded-lg border border-red-200">Cancel</a>
-            </div>
+    <!-- Main Content -->
+    <main class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50 smooth-scroll">
+        
+        <div class="bg-white px-4 py-4 z-40 border-b border-gray-200 shadow-sm shrink-0">
+            <h2 class="text-xl font-black text-slate-800">Add New Product</h2>
+            <p class="text-xs font-bold text-gray-500 mt-1">Enter product details to save in inventory.</p>
+        </div>
 
-            <!-- Form Box -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex-1 flex flex-col">
+        <div class="flex-1 overflow-y-auto p-4 pb-28">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                 
-                <div id="reader" class="w-full hidden mb-3 border-2 border-blue-400 rounded-xl overflow-hidden"></div>
-
-                <div class="mb-3">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Barcode / IMEI</label>
+                <!-- Barcode -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Barcode (Optional)</label>
                     <div class="flex gap-2">
-                        <input type="text" id="p-barcode" placeholder="Scan or type here..." class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
-                        <button onclick="startScanner()" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-md">📷</button>
+                        <input type="text" id="p-barcode" placeholder="Scan or type barcode" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800 outline-none">
+                        <button onclick="openScanner('barcode')" class="bg-slate-800 text-white px-4 rounded-xl shadow-md text-lg active:scale-95 transition-transform">📷</button>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Product Name</label>
-                    <input type="text" id="p-name" placeholder="e.g. Samsung Galaxy S24" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                <!-- Product Name -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Product Name <span class="text-red-500">*</span></label>
+                    <input type="text" id="p-name" placeholder="e.g. Samsung Galaxy S24 Ultra" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800 outline-none">
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div class="relative">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Category</label>
-                        <div class="relative">
-                            <input type="text" id="p-category" placeholder="Type/Select" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none pr-8 text-sm" onclick="toggleDropdown('cat-dropdown')">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="toggleDropdown('cat-dropdown')">
-                                <span class="text-gray-500 font-bold">^</span>
-                            </div>
-                        </div>
-                        <div id="cat-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-32 overflow-y-auto">
-                            <div class="p-2 text-center text-xs text-gray-400">Loading...</div>
-                        </div>
-                    </div>
-
-                    <div class="relative">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">GST (%)</label>
-                        <div class="relative">
-                            <input type="number" id="p-gst" value="18" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none pr-8 text-sm" onclick="toggleDropdown('gst-dropdown')">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="toggleDropdown('gst-dropdown')">
-                                <span class="text-gray-500 font-bold">^</span>
-                            </div>
-                        </div>
-                        <div id="gst-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-32 overflow-y-auto">
-                            <div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-gst', '0', 'gst-dropdown')">0%</div>
-                            <div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-gst', '12', 'gst-dropdown')">12%</div>
-                            <div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-gst', '18', 'gst-dropdown')">18%</div>
-                            <div class="p-2 hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-gst', '28', 'gst-dropdown')">28%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 mb-3">
+                <!-- Category & GST -->
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">M.R.P (₹)</label>
-                        <input type="number" id="p-mrp" placeholder="0.00" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Category <span class="text-red-500">*</span></label>
+                        <select id="p-cat" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800 outline-none">
+                            <option value="Mobile">Mobile Phone</option>
+                            <option value="Accessories">Accessories</option>
+                            <option value="Smartwatch">Smartwatch</option>
+                            <option value="Audio">Earbuds / Audio</option>
+                            <option value="Spare Parts">Spare Parts</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Sell Price (₹)</label>
-                        <input type="number" id="p-sell" placeholder="0.00" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none text-sm">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">GST Slab (%)</label>
+                        <select id="p-gst" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800 outline-none">
+                            <option value="0">0% (No GST)</option>
+                            <option value="12">12%</option>
+                            <option value="18" selected>18%</option>
+                            <option value="28">28%</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="mb-5">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Total Stock (Qty)</label>
-                    <input type="number" id="p-stock" placeholder="10" class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                <!-- Pricing -->
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 grid grid-cols-2 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-black text-gray-400 mb-1 uppercase tracking-wider">Purchase Rate (₹) <span class="text-red-500">*</span></label>
+                        <input type="number" id="p-purchase" placeholder="Your buying price" class="w-full py-2 px-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 mb-1 uppercase tracking-wider">M.R.P (₹)</label>
+                        <input type="number" id="p-mrp" placeholder="Box price" class="w-full py-2 px-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 mb-1 uppercase tracking-wider">Sell Price (₹) <span class="text-red-500">*</span></label>
+                        <input type="number" id="p-sell" placeholder="Customer price" class="w-full py-2 px-3 bg-green-50 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 font-extrabold text-sm text-green-700 outline-none">
+                    </div>
                 </div>
 
-                <!-- SLIDE TO ADD BUTTON (Compact size) -->
-                <div class="mt-auto">
-                    <div class="relative w-full h-12 bg-green-100 border border-green-300 rounded-full overflow-hidden shadow-sm" id="slider-container">
-                        <div class="absolute inset-0 flex items-center justify-center text-green-700 font-bold text-sm tracking-wide z-0 pointer-events-none">
-                            Slide to Add Product ➔
+                <!-- IMEI Tracking Toggle -->
+                <div class="flex items-center justify-between bg-blue-50 p-3 rounded-xl border border-blue-100">
+                    <div>
+                        <h4 class="font-bold text-blue-800 text-sm">Track IMEI Numbers?</h4>
+                        <p class="text-[10px] text-blue-600 font-bold mt-0.5">Best for Mobile Phones</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="imei-toggle" class="sr-only peer" onchange="toggleImeiSection()">
+                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+
+                <!-- Stock Normal (Hidden if IMEI tracked) -->
+                <div id="normal-stock-div">
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Total Stock Quantity <span class="text-red-500">*</span></label>
+                    <input type="number" id="p-stock" placeholder="e.g. 10" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-sm text-slate-800 outline-none">
+                </div>
+
+                <!-- IMEI Section -->
+                <div id="imei-section" class="hidden flex-col gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">Scan / Enter IMEI</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="imei-input" placeholder="Enter 15-digit IMEI" class="w-full py-2 px-3 bg-white border border-gray-300 rounded-lg font-bold text-sm outline-none">
+                        <button onclick="openScanner('imei')" class="bg-slate-800 text-white px-3 rounded-lg shadow-sm active:scale-95">📷</button>
+                        <button onclick="addImeiToList()" class="bg-blue-600 text-white px-3 font-bold rounded-lg shadow-sm text-sm active:scale-95">Add</button>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <div class="flex justify-between items-center mb-1 border-b border-gray-200 pb-1">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">Scanned IMEIs</span>
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">Count: <span id="imei-count">0</span></span>
                         </div>
-                        <div id="slider-thumb" class="slider-thumb absolute top-1 left-1 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center cursor-grab shadow-lg z-10 text-white font-bold text-lg">
-                            »
-                        </div>
-                        <div id="slider-progress" class="absolute top-0 left-0 h-full bg-green-500 opacity-20 w-0 z-0 transition-all duration-200"></div>
+                        <ul id="imei-list-ui" class="space-y-1 max-h-32 overflow-y-auto">
+                            <li class="text-xs text-gray-400 font-bold text-center py-2">No IMEI added yet</li>
+                        </ul>
                     </div>
                 </div>
 
             </div>
         </div>
+
+        <!-- Sticky Save Button -->
+        <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-40">
+            <button id="btn-save" onclick="saveProduct()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md text-lg transition-colors">
+                💾 Save Product
+            </button>
+        </div>
     </main>
 
-    <!-- UI Scripts -->
-    <script>
-        function toggleDropdown(id) {
-            document.getElementById(id).classList.toggle('hidden');
-        }
-        function selectOption(inputId, value, dropdownId) {
-            document.getElementById(inputId).value = value;
-            document.getElementById(dropdownId).classList.add('hidden');
-        }
+    <!-- BOXED SCANNER MODAL -->
+    <div id="scanner-modal" class="fixed inset-0 z-[100] hidden bg-black/70 items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center p-4 bg-slate-900 text-white">
+                <h3 id="scanner-title" class="font-bold text-base">Scan Barcode</h3>
+                <button onclick="closeScanner()" class="font-bold text-red-400 text-sm bg-red-400/20 px-3 py-1 rounded-lg">Close ✖</button>
+            </div>
+            <div class="p-2 bg-gray-100 flex justify-center">
+                <div id="reader" class="w-full rounded-xl overflow-hidden"></div>
+            </div>
+            <div class="p-3 text-center text-xs text-gray-500 font-bold bg-white border-t border-gray-200">
+                Point camera at the barcode
+            </div>
+        </div>
+    </div>
 
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.relative')) {
-                document.getElementById('cat-dropdown').classList.add('hidden');
-                document.getElementById('gst-dropdown').classList.add('hidden');
-            }
-        });
-
-        // Barcode Scanner
-        let html5QrCode;
-        function startScanner() {
-            document.getElementById('reader').classList.remove('hidden');
-            html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (text) => {
-                document.getElementById('p-barcode').value = text;
-                html5QrCode.stop(); 
-                document.getElementById('reader').classList.add('hidden');
-            }, (err) => {});
-        }
-
-        // Slide Button Logic
-        const slider = document.getElementById('slider-thumb');
-        const container = document.getElementById('slider-container');
-        const progress = document.getElementById('slider-progress');
-        let isDragging = false, startX = 0, currentX = 0, maxSlide = 0;
-
-        const onDragStart = (e) => {
-            isDragging = true;
-            startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            maxSlide = container.offsetWidth - slider.offsetWidth - 8;
-            slider.classList.add('dragging');
-        };
-
-        const onDragMove = (e) => {
-            if (!isDragging) return;
-            let x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            currentX = x - startX;
-            if (currentX < 0) currentX = 0;
-            if (currentX > maxSlide) currentX = maxSlide;
-            
-            slider.style.transform = `translateX(${currentX}px)`;
-            progress.style.width = `${currentX + 20}px`;
-        };
-
-        const onDragEnd = () => {
-            if (!isDragging) return;
-            isDragging = false;
-            slider.classList.remove('dragging');
-
-            if (currentX >= maxSlide * 0.85) {
-                slider.style.transform = `translateX(${maxSlide}px)`;
-                progress.style.width = '100%';
-                slider.innerHTML = "⏳";
-                slider.classList.add('bg-blue-500');
-                if(window.saveProductToFirebase) window.saveProductToFirebase();
-            } else {
-                window.resetSlider();
-            }
-        };
-
-        slider.addEventListener('mousedown', onDragStart);
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('mouseup', onDragEnd);
-        slider.addEventListener('touchstart', onDragStart, {passive: true});
-        document.addEventListener('touchmove', onDragMove, {passive: true});
-        document.addEventListener('touchend', onDragEnd);
-
-        window.resetSlider = function() {
-            slider.style.transform = `translateX(0px)`;
-            progress.style.width = '0px';
-            slider.innerHTML = "»";
-            slider.classList.remove('bg-blue-500');
-            currentX = 0;
-        }
-    </script>
-
-    <!-- Firebase Logic -->
+    <!-- Firebase Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
         
         const app = initializeApp({ 
             apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
@@ -227,58 +190,161 @@
         });
         const db = getFirestore(app);
 
-        // Fetch Categories
-        async function fetchCategories() {
-            try {
-                const snap = await getDocs(collection(db, "Products"));
-                let categories = new Set(["Mobile", "Smartwatch", "Accessories", "Smart TV"]);
-                
-                snap.forEach(doc => {
-                    const data = doc.data();
-                    if(data.category) categories.add(data.category); 
-                });
-
-                const catDiv = document.getElementById('cat-dropdown');
-                catDiv.innerHTML = '';
-                categories.forEach(cat => {
-                    catDiv.innerHTML += `<div class="p-2 border-b hover:bg-blue-50 cursor-pointer text-sm" onclick="selectOption('p-category', '${cat}', 'cat-dropdown')">${cat}</div>`;
-                });
-            } catch (error) {
-                console.error(error);
-            }
+        // --- SECURITY CHECK ---
+        const userRole = sessionStorage.getItem('userRole');
+        if (userRole !== 'admin') {
+            document.getElementById('access-denied').classList.remove('hidden');
+            document.getElementById('access-denied').classList.add('flex');
         }
-        
-        fetchCategories();
 
-        // Save Function
-        window.saveProductToFirebase = async function() {
-            const name = document.getElementById('p-name').value;
-            const sell = Number(document.getElementById('p-sell').value);
-            const stock = Number(document.getElementById('p-stock').value);
-            const cat = document.getElementById('p-category').value;
+        // --- IMEI LOGIC ---
+        let imeiArray = [];
+        
+        window.toggleImeiSection = function() {
+            const isChecked = document.getElementById('imei-toggle').checked;
+            const imeiDiv = document.getElementById('imei-section');
+            const stockDiv = document.getElementById('normal-stock-div');
             
-            if(!name || !sell || !stock || !cat) {
-                alert("Please fill Name, Category, Sell Price and Stock!");
-                window.resetSlider();
+            if(isChecked) {
+                imeiDiv.classList.remove('hidden');
+                imeiDiv.classList.add('flex');
+                stockDiv.classList.add('hidden');
+                document.getElementById('p-stock').value = ''; // clear normal stock
+            } else {
+                imeiDiv.classList.add('hidden');
+                imeiDiv.classList.remove('flex');
+                stockDiv.classList.remove('hidden');
+                imeiArray = []; // reset array
+                renderImeiList();
+            }
+        };
+
+        window.addImeiToList = function() {
+            const input = document.getElementById('imei-input');
+            const val = input.value.trim();
+            
+            if(!val) return;
+            if(imeiArray.includes(val)) {
+                alert("This IMEI is already in the list!");
                 return;
             }
             
+            imeiArray.push(val);
+            input.value = '';
+            renderImeiList();
+        };
+
+        window.removeImei = function(index) {
+            imeiArray.splice(index, 1);
+            renderImeiList();
+        };
+
+        function renderImeiList() {
+            const listUI = document.getElementById('imei-list-ui');
+            document.getElementById('imei-count').innerText = imeiArray.length;
+            
+            if(imeiArray.length === 0) {
+                listUI.innerHTML = '<li class="text-xs text-gray-400 font-bold text-center py-2">No IMEI added yet</li>';
+                return;
+            }
+            
+            listUI.innerHTML = '';
+            imeiArray.forEach((imei, idx) => {
+                listUI.innerHTML += `
+                    <li class="flex justify-between items-center bg-white border border-gray-200 px-3 py-1.5 rounded-lg">
+                        <span class="text-xs font-bold text-slate-700">${imei}</span>
+                        <button onclick="removeImei(${idx})" class="text-red-500 font-bold text-xs bg-red-50 w-5 h-5 rounded flex items-center justify-center">✖</button>
+                    </li>
+                `;
+            });
+        }
+
+        // --- SCANNER LOGIC ---
+        let html5QrCode;
+        let scanTarget = ''; // 'barcode' or 'imei'
+
+        window.openScanner = function(targetType) {
+            scanTarget = targetType;
+            document.getElementById('scanner-title').innerText = targetType === 'imei' ? 'Scan IMEI Barcode' : 'Scan Product Barcode';
+            
+            const modal = document.getElementById('scanner-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, (text) => {
+                if(scanTarget === 'barcode') {
+                    document.getElementById('p-barcode').value = text;
+                } else if(scanTarget === 'imei') {
+                    document.getElementById('imei-input').value = text;
+                    addImeiToList(); // auto add after scan
+                }
+                closeScanner();
+            }, (err) => {});
+        };
+
+        window.closeScanner = function() {
+            if(html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    const modal = document.getElementById('scanner-modal');
+                    modal.classList.add('hidden'); modal.classList.remove('flex');
+                }).catch(e => {});
+            }
+        };
+
+        // --- SAVE DATA LOGIC ---
+        window.saveProduct = async function() {
+            const btn = document.getElementById('btn-save');
+            
+            const name = document.getElementById('p-name').value.trim();
+            const category = document.getElementById('p-cat').value;
+            const gst = Number(document.getElementById('p-gst').value) || 0;
+            const purchasePrice = Number(document.getElementById('p-purchase').value) || 0;
+            const mrp = Number(document.getElementById('p-mrp').value) || 0;
+            const sellPrice = Number(document.getElementById('p-sell').value) || 0;
+            const barcode = document.getElementById('p-barcode').value.trim();
+            
+            const isImeiTracked = document.getElementById('imei-toggle').checked;
+            
+            // Validation
+            if(!name) { alert("Product Name is required!"); return; }
+            if(purchasePrice <= 0) { alert("Purchase Rate is required!"); return; }
+            if(sellPrice <= 0) { alert("Sell Price is required!"); return; }
+            
+            let stockQty = 0;
+            if(isImeiTracked) {
+                if(imeiArray.length === 0) { alert("Please add at least one IMEI!"); return; }
+                stockQty = imeiArray.length;
+            } else {
+                stockQty = Number(document.getElementById('p-stock').value);
+                if(stockQty <= 0) { alert("Stock Quantity must be greater than 0!"); return; }
+            }
+
+            btn.innerHTML = "Saving... ⏳";
+            btn.disabled = true;
+
+            const productData = {
+                name: name,
+                barcode: barcode,
+                category: category,
+                gst: gst,
+                purchasePrice: purchasePrice,
+                mrp: mrp,
+                sellPrice: sellPrice,
+                stock: stockQty,
+                imeiList: isImeiTracked ? imeiArray : [],
+                timestamp: new Date().getTime()
+            };
+
             try {
-                await addDoc(collection(db, "Products"), {
-                    barcode: document.getElementById('p-barcode').value, 
-                    name: name, 
-                    category: cat, 
-                    gst: Number(document.getElementById('p-gst').value), 
-                    mrp: Number(document.getElementById('p-mrp').value), 
-                    sellPrice: sell, 
-                    stock: stock, 
-                    addedAt: new Date().toISOString()
-                });
+                await addDoc(collection(db, "Products"), productData);
                 alert("✅ Product Added Successfully!");
-                window.location.reload(); 
-            } catch(e) { 
-                alert("❌ Error saving product!"); 
-                window.resetSlider();
+                window.location.reload(); // Refresh to clear form
+            } catch(e) {
+            alert("❌ Failed to add product. Check internet connection.");
+                btn.innerHTML = "💾 Save Product";
+                btn.disabled = false;
             }
         };
     </script>
