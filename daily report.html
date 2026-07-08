@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Daily Report - Apna Billing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .smooth-scroll { -webkit-overflow-scrolling: touch !important; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-800 fixed inset-0 h-[100dvh] w-screen overflow-hidden overscroll-none">
+
+    <!-- App Header -->
+    <header class="bg-slate-800 text-white flex justify-between items-center h-14 px-4 absolute top-0 w-full z-50 shadow-md">
+        <div class="flex items-center gap-3">
+            <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(0)'" class="text-2xl focus:outline-none">☰</button>
+            <h1 class="text-lg font-bold">Apna Billing</h1>
+        </div>
+        <div class="relative"><span class="text-xl">📅</span></div>
+    </header>
+
+    <!-- App Sidebar -->
+    <div id="mySidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 text-gray-300 z-[60] transform -translate-x-full transition-transform duration-300 shadow-2xl pt-14">
+        <button onclick="document.getElementById('mySidebar').style.transform = 'translateX(-100%)'" class="absolute top-3 right-4 text-3xl hover:text-white">&times;</button>
+        <div class="overflow-y-auto h-full pb-20">
+            <a href="index.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">🏠 Dashboard</a>
+            <a href="sell.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">🛒 Sell Product</a>
+            
+            <div id="admin-nav-links">
+                <a href="purchase.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">🚚 Purchase Entry</a>
+                <a href="daily_report.html" class="block py-3 px-6 text-sm bg-slate-800 text-white font-bold border-l-4 border-blue-500 border-b border-slate-700">📅 Daily Collection</a>
+                <a href="khata.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📒 Ledger Khata</a>
+                <a href="reports.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📊 P&L Reports</a>
+                <a href="add_product.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">➕ Add Product</a>
+            </div>
+            
+            <a href="inventory.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📦 Inventory</a>
+            <a href="bills.html" class="block py-3 px-6 text-sm hover:bg-slate-800 hover:text-white border-b border-slate-700">📜 Sales History</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="absolute top-14 bottom-0 w-full flex flex-col bg-gray-50 smooth-scroll">
+        
+        <!-- Date Selector Sticky Header -->
+        <div class="bg-white px-4 py-3 z-40 border-b border-gray-200 shadow-sm shrink-0 flex justify-between items-center">
+            <div>
+                <h2 class="text-lg font-black text-slate-800">Day Book</h2>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Collection Report</p>
+            </div>
+            <div>
+                <input type="date" id="date-picker" class="bg-blue-50 border border-blue-200 text-blue-700 text-sm font-bold rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 pb-20 space-y-4">
+            
+            <!-- Summary Main Card -->
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Collection (In Hand)</p>
+                <h2 class="text-3xl font-black">₹<span id="total-collection">0.00</span></h2>
+                <p class="text-[10px] text-slate-400 mt-2">Total Sales Value: ₹<span id="total-sales">0.00</span></p>
+                <div class="absolute -right-4 -top-8 w-24 h-24 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
+            </div>
+
+            <!-- Breakdown Cards -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Cash Received</p>
+                    <h3 class="text-xl font-black text-emerald-600 mt-1">₹<span id="cash-total">0.00</span></h3>
+                    <span class="absolute -right-2 -bottom-2 text-4xl opacity-10">💵</span>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Online / UPI</p>
+                    <h3 class="text-xl font-black text-blue-600 mt-1">₹<span id="online-total">0.00</span></h3>
+                    <span class="absolute -right-2 -bottom-2 text-4xl opacity-10">📱</span>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 col-span-2 relative overflow-hidden flex justify-between items-center">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">EMI Downpayment</p>
+                        <h3 class="text-xl font-black text-purple-600 mt-1">₹<span id="downpay-total">0.00</span></h3>
+                    </div>
+                    <span class="text-4xl opacity-10">💳</span>
+                </div>
+            </div>
+
+            <!-- Transaction List -->
+            <div>
+                <h3 class="font-bold text-xs text-gray-400 uppercase tracking-widest mb-2 mt-2 pl-1">Transactions for Selected Date</h3>
+                <div id="transaction-list" class="space-y-3">
+                    <div class="text-center p-5 text-gray-500 font-bold bg-white rounded-2xl border border-gray-100">Loading data... ⏳</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Firebase Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+        
+        const app = initializeApp({ 
+            apiKey: "AIzaSyB8iVbF-qkIT23ttlcGbKUA1iB9ONprdPI", 
+            projectId: "smartplan-96109", 
+            appId: "1:266453436752:web:bbe7047a7de525017fc455" 
+        });
+        const db = getFirestore(app);
+
+        // Security check
+        const userRole = sessionStorage.getItem('userRole') || 'staff';
+        if (userRole !== 'admin') {
+            document.getElementById('admin-nav-links').classList.add('hidden');
+        }
+
+        let allBills = [];
+
+        // Set Datepicker to Today
+        const datePicker = document.getElementById('date-picker');
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        datePicker.value = `${yyyy}-${mm}-${dd}`;
+
+        async function fetchBills() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "Bills"));
+                allBills = [];
+                querySnapshot.forEach((doc) => {
+                    allBills.push({ id: doc.id, ...doc.data() });
+                });
+                calculateDayBook();
+            } catch(e) {
+                document.getElementById('transaction-list').innerHTML = `<div class="text-center p-5 text-red-500 font-bold bg-red-50 rounded-xl">❌ Failed to load!</div>`;
+            }
+        }
+
+        function calculateDayBook() {
+            // Convert YYYY-MM-DD from picker to DD/MM/YYYY for Firebase match
+            const selectedDateValue = datePicker.value; // e.g. 2026-07-08
+            if(!selectedDateValue) return;
+            
+            const [y, m, d] = selectedDateValue.split('-');
+            const targetDateStr = `${d}/${m}/${y}`; // Matches 'en-GB' format stored in DB
+
+            let totalSales = 0;
+            let cash = 0;
+            let online = 0;
+            let downpayment = 0;
+            let totalCollection = 0;
+
+            const filteredBills = allBills.filter(bill => bill.date === targetDateStr);
+            const listUI = document.getElementById('transaction-list');
+            listUI.innerHTML = '';
+
+            if(filteredBills.length === 0) {
+                listUI.innerHTML = `<div class="text-center p-6 text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-sm"><p class="font-bold">No sales on this date.</p></div>`;
+            }
+
+            // Sort by timestamp descending (newest first)
+            filteredBills.sort((a, b) => b.timestamp - a.timestamp);
+
+            filteredBills.forEach(bill => {
+                totalSales += Number(bill.grandTotal || 0);
+
+                let collectedFromThisBill = 0;
+                let modeIcon = '';
+                let modeColor = '';
+
+                if (bill.paymentMode === 'Cash') {
+                    collectedFromThisBill = Number(bill.grandTotal || 0);
+                    cash += collectedFromThisBill;
+                    modeIcon = '💵'; modeColor = 'text-emerald-600 bg-emerald-50';
+                } 
+                else if (bill.paymentMode === 'Online/UPI') {
+                    collectedFromThisBill = Number(bill.grandTotal || 0);
+                    online += collectedFromThisBill;
+                    modeIcon = '📱'; modeColor = 'text-blue-600 bg-blue-50';
+                } 
+                else if (bill.paymentMode === 'EMI/Finance') {
+                    collectedFromThisBill = Number(bill.downPayment || 0);
+                    downpayment += collectedFromThisBill;
+                    modeIcon = '💳'; modeColor = 'text-purple-600 bg-purple-50';
+                }
+
+                totalCollection += collectedFromThisBill;
+
+                // Render Transaction Card
+                listUI.innerHTML += `
+                    <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg ${modeColor}">${modeIcon}</div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm leading-tight">${bill.customer.name}</h4>
+                                <p class="text-[10px] text-gray-500 font-bold mt-0.5">${bill.paymentMode} • Bill: ${bill.id.slice(0,5).toUpperCase()}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <h3 class="font-extrabold text-slate-800 text-base">+ ₹${collectedFromThisBill.toFixed(2)}</h3>
+                            ${bill.paymentMode === 'EMI/Finance' ? `<p class="text-[9px] text-red-500 font-bold mt-0.5">Sale: ₹${bill.grandTotal}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Update UI
+            document.getElementById('total-sales').innerText = totalSales.toFixed(2);
+            document.getElementById('total-collection').innerText = totalCollection.toFixed(2);
+            document.getElementById('cash-total').innerText = cash.toFixed(2);
+            document.getElementById('online-total').innerText = online.toFixed(2);
+            document.getElementById('downpay-total').innerText = downpayment.toFixed(2);
+        }
+
+        // Listen for date change
+        datePicker.addEventListener('change', calculateDayBook);
+
+        // Init
+        fetchBills();
+    </script>
+</body>
+</html>
